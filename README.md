@@ -8,7 +8,7 @@ Sistema acadêmico para gerenciamento de eventos, inscrições, pagamentos e lis
 - Spring Boot
 - Spring Data JPA
 - Hibernate
-- PostgreSQL
+- MySQL
 - Maven
 
 ## Funcionalidades
