@@ -14,15 +14,24 @@ Sistema acadêmico para gerenciamento de eventos, inscrições e pagamentos.
 
 ## Funcionalidades
 
-- Cadastro de eventos
-- Cadastro de participantes
-- Inscrição em eventos
-- Controle de lotes
-- Pagamentos
-- Avaliação do evento
-- Categorias do evento
-- Status evento
-- Busca de eventos
+- cadastro de evento
+- cadastro de participante
+- inscrição evento
+- controle de lotes
+- pagamento
+- avaliações evento
+- Favoritar evento
+- Buscar eventos
+- sistema de lista de espera
+- sistema de notificação
+- cupom desconto
+- cancelar inscrição
+- Gerenciamento de status do evento
+- Controle de vagas no evento
+- Validação de conflito de horário
+-  Limite de inscrições por participante
+
+
 
 ## Executar o projeto
 
