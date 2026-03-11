@@ -1,6 +1,6 @@
 # Sistema de Gestão de Eventos
 
-Sistema acadêmico para gerenciamento de eventos, inscrições, pagamentos e lista de espera.
+Sistema acadêmico para gerenciamento de eventos, inscrições e pagamentos.
 
 ## Tecnologias utilizadas
 
@@ -10,6 +10,7 @@ Sistema acadêmico para gerenciamento de eventos, inscrições, pagamentos e lis
 - Hibernate
 - MySQL
 - Maven
+- Angular
 
 ## Funcionalidades
 
@@ -18,7 +19,10 @@ Sistema acadêmico para gerenciamento de eventos, inscrições, pagamentos e lis
 - Inscrição em eventos
 - Controle de lotes
 - Pagamentos
-- Lista de espera
+- Avaliação do evento
+- Categorias do evento
+- Status evento
+- Busca de eventos
 
 ## Executar o projeto
 
