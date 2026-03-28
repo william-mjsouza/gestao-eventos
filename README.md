@@ -22,6 +22,7 @@ Sistema acadêmico para gerenciamento de eventos, inscrições e pagamentos.
 - avaliações evento
 - Favoritar evento
 - Buscar eventos
+- Carrinho
 - sistema de lista de espera
 - sistema de notificação
 - cupom desconto
