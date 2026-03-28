@@ -31,7 +31,9 @@ Sistema acadêmico para gerenciamento de eventos, inscrições e pagamentos.
 - Validação de conflito de horário
 -  Limite de inscrições por participante
 
+## Mapa das Histórias de Usuários
 
+https://miro.com/app/board/uXjVG1wbDB4=/?share_link_id=839589694420
 
 ## Executar o projeto
 
