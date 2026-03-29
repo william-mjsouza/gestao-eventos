@@ -29,12 +29,15 @@ Sistema acadêmico para gerenciamento de eventos, inscrições e pagamentos.
 - cancelar inscrição
 - Gerenciamento de status do evento
 - Controle de vagas no evento
-- Validação de conflito de horário
+- Controle de conflito de horário
 -  Limite de inscrições por participante
 
 ## Mapa das Histórias de Usuários
 
 https://miro.com/app/board/uXjVG1wbDB4=/?share_link_id=839589694420
+
+## Jira
+https://projetorequisitos.atlassian.net/jira/software/projects/SCRUM/boards/1/backlog
 
 ## Executar o projeto
 
