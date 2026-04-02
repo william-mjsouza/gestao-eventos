@@ -6,10 +6,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.validator.constraints.br.CPF;
 
 @Getter
@@ -17,8 +14,8 @@ import org.hibernate.validator.constraints.br.CPF;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "PARTICIPANTE")
-public class Participante {
+@Table(name = "PESSOA")
+public class Pessoa {
 
     @Id
     @Column(length = 11)
@@ -40,5 +37,8 @@ public class Participante {
 
     @Column(nullable = false)
     private Double saldo = 0.0;
+
+    @Column(nullable = false)
+    private Boolean organizador = false;
 
 }
