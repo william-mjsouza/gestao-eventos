@@ -1,9 +1,9 @@
 package com.gestaoeventos.bdd.steps;
 
-import com.gestaoeventos.entity.Participante;
+import com.gestaoeventos.entity.Pessoa;
 import com.gestaoeventos.exception.ParticipanteException;
-import com.gestaoeventos.repository.ParticipanteRepository;
-import com.gestaoeventos.service.ParticipanteService;
+import com.gestaoeventos.repository.PessoaRepository;
+import com.gestaoeventos.service.PessoaService;
 import io.cucumber.java.pt.Dado;
 import io.cucumber.java.pt.Entao;
 import io.cucumber.java.pt.Quando;
@@ -18,36 +18,37 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 @CucumberContextConfiguration
 @SpringBootTest
-public class ParticipanteSteps {
+public class PessoaSteps {
 
     @Autowired
-    private ParticipanteService participanteService;
+    private PessoaService pessoaService;
 
     @MockitoBean
-    private ParticipanteRepository participanteRepository;
+    private PessoaRepository pessoaRepository;
 
-    private Participante participante;
+    private Pessoa pessoa;
     private Exception excecao;
 
 
     @Dado("que o usuário preenche todos os dados obrigatórios corretamente com CPF e e-mail únicos")
     public void preencher_dados_validos() {
-        participante = new Participante();
-        participante.setNome("Teste");
-        participante.setSenha("123456");
-        participante.setEmail("Teste@gmail.com");
-        participante.setCpf("52718364020");
-        participante.setSaldo(0.0);
+        pessoa = new Pessoa();
+        pessoa.setNome("Teste");
+        pessoa.setSenha("123456");
+        pessoa.setEmail("Teste@gmail.com");
+        pessoa.setCpf("52718364020");
+        pessoa.setOrganizador(false);
+        pessoa.setSaldo(0.0);
 
         // simular o banco
-        when(participanteRepository.existsById(anyString())).thenReturn(false);
-        when(participanteRepository.existsByEmail(anyString())).thenReturn(false);
+        when(pessoaRepository.existsById(anyString())).thenReturn(false);
+        when(pessoaRepository.existsByEmail(anyString())).thenReturn(false);
     }
 
     @Quando("ele submete o formulário")
     public void enviar_cadastro(){
         try{
-            participanteService.salvar(participante);
+            pessoaService.salvar(pessoa);
         }catch (Exception e){
             excecao = e;
         }
@@ -56,19 +57,21 @@ public class ParticipanteSteps {
     @Entao("o sistema deve criar a conta")
     public void verifica_conta_criada(){
         assertNull(excecao, "Não deveria ter ocorrido erro no cadastro válido");
-        verify(participanteRepository, times(1)).save(any(Participante.class));
+        verify(pessoaRepository, times(1)).save(any(Pessoa.class));
     }
 
 
     @Dado("que já existe um participante registrado com o CPF {string}")
     public void verifica_cpf_jaexistente(String cpfIformado){
-        when(participanteRepository.existsById(cpfIformado)).thenReturn(true);
+        when(pessoaRepository.existsById(cpfIformado)).thenReturn(true);
 
-        participante = new Participante();
-        participante.setCpf(cpfIformado);
-        participante.setEmail("novo@gmail.com");
-        participante.setNome("Usuário Teste");
-        participante.setSenha("123");
+        pessoa = new Pessoa();
+        pessoa.setCpf(cpfIformado);
+        pessoa.setEmail("novo@gmail.com");
+        pessoa.setNome("Usuário Teste");
+        pessoa.setSenha("123");
+        pessoa.setOrganizador(false);
+        pessoa.setSaldo(0.0);
     }
 
     @Quando("um novo usuário tenta se cadastrar utilizando o mesmo CPF")
@@ -79,13 +82,15 @@ public class ParticipanteSteps {
 
     @Dado("que já existe um participante registrado com o email {string}")
     public void emailJaExistente(String emailInformado) {
-        when(participanteRepository.existsByEmail(emailInformado)).thenReturn(true);
+        when(pessoaRepository.existsByEmail(emailInformado)).thenReturn(true);
 
-        participante = new Participante();
-        participante.setCpf("04592186033");
-        participante.setEmail(emailInformado);
-        participante.setNome("Usuário Teste 2");
-        participante.setSenha("123");
+        pessoa = new Pessoa();
+        pessoa.setCpf("04592186033");
+        pessoa.setEmail(emailInformado);
+        pessoa.setNome("Usuário Teste 2");
+        pessoa.setSenha("123");
+        pessoa.setOrganizador(false);
+        pessoa.setSaldo(0.0);
     }
 
     @Quando("um novo usuário tenta se cadastrar utilizando o mesmo email")
@@ -103,6 +108,6 @@ public class ParticipanteSteps {
         assertTrue(mensagemErro.contains(campo.toLowerCase()),
                 "A mensagem de erro deveria mencionar o campo: " + campo);
 
-        verify(participanteRepository, never()).save(any(Participante.class));
+        verify(pessoaRepository, never()).save(any(Pessoa.class));
     }
 }
