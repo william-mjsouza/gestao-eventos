@@ -8,27 +8,22 @@ import io.cucumber.java.pt.Dado;
 import io.cucumber.java.pt.Entao;
 import io.cucumber.java.pt.Quando;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
-import io.cucumber.spring.CucumberContextConfiguration;
-import org.springframework.boot.test.context.SpringBootTest;
 
-@CucumberContextConfiguration
-@SpringBootTest
 public class PessoaSteps {
 
     @Autowired
     private PessoaService pessoaService;
 
-    @MockitoBean
+    @Autowired
     private PessoaRepository pessoaRepository;
 
     private Pessoa pessoa;
     private Exception excecao;
-
 
     @Dado("que o usuário preenche todos os dados obrigatórios corretamente com CPF e e-mail únicos")
     public void preencher_dados_validos() {
