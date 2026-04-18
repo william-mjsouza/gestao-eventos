@@ -35,6 +35,14 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(resposta);
     }
+    
+    @ExceptionHandler(LoteException.class)
+    public ResponseEntity<Map<String, String>> handleLoteException(LoteException ex) {
+        Map<String, String> resposta = new HashMap<>();
+        resposta.put("erro", ex.getMessage());
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(resposta);
+    }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, String>> handleValidationExceptions(MethodArgumentNotValidException ex) {
