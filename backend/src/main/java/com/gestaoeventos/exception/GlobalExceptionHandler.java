@@ -28,6 +28,14 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(resposta);
     }
 
+    @ExceptionHandler(InscricaoException.class)
+    public ResponseEntity<Map<String, String>> handleInscricaoException(InscricaoException ex) {
+        Map<String, String> resposta = new HashMap<>();
+        resposta.put("erro", ex.getMessage());
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(resposta);
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, String>> handleValidationExceptions(MethodArgumentNotValidException ex) {
         Map<String, String> erros = new HashMap<>();
