@@ -42,4 +42,4 @@ https://projetorequisitos.atlassian.net/jira/software/projects/SCRUM/boards/1/ba
 ## Executar o projeto
 
 ```bash
-mvn spring-boot:run
+.\mvnw spring-boot:run
