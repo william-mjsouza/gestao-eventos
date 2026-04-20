@@ -6,7 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
+import com.gestaoeventos.service.CancelamentoInscricaoService;
 import java.util.Map;
 
 @RestController
@@ -15,6 +15,9 @@ public class InscricaoController {
 
     @Autowired
     private InscricaoService inscricaoService;
+
+    @Autowired
+    private CancelamentoInscricaoService cancelamentoService;
 
     @PostMapping
     public ResponseEntity<Inscricao> iniciarInscricao(@RequestBody Map<String, Object> payload) {
@@ -31,5 +34,11 @@ public class InscricaoController {
     public ResponseEntity<Inscricao> confirmarPagamento(@PathVariable Long id) {
         Inscricao inscricaoConfirmada = inscricaoService.confirmarPagamento(id);
         return ResponseEntity.ok(inscricaoConfirmada);
+    }
+
+    @PatchMapping("/{id}/cancelar")
+    public ResponseEntity<Inscricao> cancelarInscricao(@PathVariable Long id) {
+        Inscricao inscricaoCancelada = cancelamentoService.executar(id);
+        return ResponseEntity.ok(inscricaoCancelada);
     }
 }
