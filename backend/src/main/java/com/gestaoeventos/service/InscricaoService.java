@@ -1,11 +1,7 @@
 package com.gestaoeventos.service;
 
-import com.gestaoeventos.entity.Evento;
-import com.gestaoeventos.entity.Inscricao;
-import com.gestaoeventos.entity.Lote;
-import com.gestaoeventos.entity.Pessoa;
-import com.gestaoeventos.entity.StatusInscricao;
-import com.gestaoeventos.exception.InscricaoException; 
+import com.gestaoeventos.entity.*;
+import com.gestaoeventos.exception.InscricaoException;
 import com.gestaoeventos.repository.EventoRepository;
 import com.gestaoeventos.repository.InscricaoRepository;
 import com.gestaoeventos.repository.PessoaRepository;
@@ -32,6 +28,13 @@ public class InscricaoService {
 
         Evento evento = eventoRepository.findById(eventoId)
                 .orElseThrow(() -> new InscricaoException("Evento não encontrado."));
+
+        if (evento.getStatus() == StatusEvento.CANCELADO) {
+            throw new InscricaoException("Não é possível se inscrever em um evento cancelado.");
+        }
+        if (evento.getStatus() == StatusEvento.ENCERRADO) {
+            throw new InscricaoException("Não é possível se inscrever em um evento encerrado.");
+        }
 
         long inscritos = inscricaoRepository.countByEventoId(eventoId);
         if (inscritos >= evento.getCapacidade()) {

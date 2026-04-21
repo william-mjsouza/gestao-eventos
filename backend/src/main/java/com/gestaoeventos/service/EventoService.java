@@ -2,12 +2,12 @@ package com.gestaoeventos.service;
 
 import com.gestaoeventos.entity.Evento;
 import com.gestaoeventos.entity.Pessoa;
+import com.gestaoeventos.entity.StatusEvento;
 import com.gestaoeventos.exception.EventoException;
 import com.gestaoeventos.repository.EventoRepository;
 import com.gestaoeventos.repository.PessoaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
 import java.time.LocalDateTime;
 
 @Service
@@ -43,6 +43,24 @@ public class EventoService {
             throw new EventoException("Já existe um evento cadastrado com este nome.");
         }
 
+        return eventoRepository.save(evento);
+    }
+
+    public Evento alterarStatus(Long eventoId, StatusEvento novoStatus) {
+        Evento evento = eventoRepository.findById(eventoId)
+                .orElseThrow(() -> new EventoException("Evento não encontrado."));
+
+        // Não pode reativar um evento cancelado ou encerrado
+        if (novoStatus == StatusEvento.ATIVO) {
+            if (evento.getDataHoraInicio().isBefore(LocalDateTime.now())) {
+                throw new EventoException("Não é possível ativar um evento com data no passado.");
+            }
+            if (evento.getStatus() == StatusEvento.CANCELADO) {
+                throw new EventoException("Um evento cancelado não pode ser reativado.");
+            }
+        }
+
+        evento.setStatus(novoStatus);
         return eventoRepository.save(evento);
     }
 }
