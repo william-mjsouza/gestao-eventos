@@ -51,4 +51,8 @@ public class Evento {
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "evento_id")
     private List<Lote> lotes = new ArrayList<>();
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private StatusEvento status = StatusEvento.ATIVO;
 }
