@@ -4,6 +4,7 @@ import com.gestaoeventos.repository.AvaliacaoRepository;
 import com.gestaoeventos.repository.EventoRepository;
 import com.gestaoeventos.repository.FavoritoRepository;
 import com.gestaoeventos.repository.InscricaoRepository;
+import com.gestaoeventos.repository.ListaEsperaRepository;
 import com.gestaoeventos.repository.PessoaRepository;
 import io.cucumber.spring.CucumberContextConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -28,4 +29,6 @@ public class CucumberSpringConfiguration {
     @MockitoBean
     private AvaliacaoRepository avaliacaoRepository;
 
+    @MockitoBean
+    private ListaEsperaRepository listaEsperaRepository;
 }
