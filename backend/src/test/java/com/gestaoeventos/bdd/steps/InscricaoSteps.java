@@ -6,6 +6,7 @@ import com.gestaoeventos.repository.EventoRepository;
 import com.gestaoeventos.repository.InscricaoRepository;
 import com.gestaoeventos.repository.PessoaRepository;
 import com.gestaoeventos.service.InscricaoService;
+import com.gestaoeventos.service.CancelamentoInscricaoService;
 import io.cucumber.java.pt.Dado;
 import io.cucumber.java.pt.E;
 import io.cucumber.java.pt.Entao;
@@ -22,23 +23,27 @@ import static org.mockito.Mockito.*;
 
 public class InscricaoSteps {
 
-    @Autowired
-    private InscricaoService inscricaoService;
 
-    @Autowired
-    private InscricaoRepository inscricaoRepository;
+    @Autowired private InscricaoService inscricaoService;
+    @Autowired private CancelamentoInscricaoService cancelamentoService;
 
-    @Autowired
-    private PessoaRepository pessoaRepository;
 
-    @Autowired
-    private EventoRepository eventoRepository;
+    @Autowired private InscricaoRepository inscricaoRepository;
+    @Autowired private PessoaRepository pessoaRepository;
+    @Autowired private EventoRepository eventoRepository;
+
 
     private Pessoa participante;
     private Evento evento;
     private Lote lote;
     private Inscricao inscricaoGerada;
     private Exception excecao;
+
+
+    private Inscricao inscricaoCancelamento;
+    private double saldoInicial;
+    private int vagasIniciais;
+
 
     @Dado("que o evento está ativo")
     public void evento_ativo() {
@@ -76,14 +81,13 @@ public class InscricaoSteps {
     @Entao("o sistema deve inscrever o participante")
     public void sistema_deve_inscrever_participante() {
         assertNotNull(inscricaoGerada, "A inscrição deveria ter sido gerada.");
-        assertEquals(StatusInscricao.CONFIRMADA, inscricaoGerada.getStatus(), "A inscrição deveria estar confirmada após o pagamento.");
+        assertEquals(StatusInscricao.CONFIRMADA, inscricaoGerada.getStatus(), "A inscrição deveria estar confirmada.");
     }
 
     @Dado("que o usuário já está inscrito no evento")
     public void usuario_ja_inscrito() {
         evento_ativo();
         possui_vagas();
-
         when(inscricaoRepository.existsByParticipanteCpfAndEventoId(participante.getCpf(), evento.getId())).thenReturn(true);
     }
 
@@ -98,8 +102,95 @@ public class InscricaoSteps {
 
     @Entao("o sistema deve alertar que ele já possui participação")
     public void sistema_alerta_participacao() {
-        assertNotNull(excecao, "Uma exceção deveria ser lançada para inscrição duplicada.");
-        assertTrue(excecao instanceof InscricaoException, "A exceção deveria ser do tipo InscricaoException");
+        assertNotNull(excecao, "Uma exceção deveria ser lançada.");
+        assertTrue(excecao instanceof InscricaoException);
         assertEquals("Usuário já possui participação neste evento.", excecao.getMessage());
+    }
+
+
+
+    @Dado("que um participante possui uma inscrição confirmada")
+    public void participante_possui_inscricao_confirmada() {
+        participante = new Pessoa();
+        participante.setCpf("98765432100");
+        saldoInicial = 500.0;
+        participante.setSaldo(saldoInicial);
+
+        evento = new Evento();
+        evento.setId(1L);
+
+        lote = new Lote();
+        lote.setId(1L);
+        lote.setPreco(new BigDecimal("100.00"));
+        vagasIniciais = 50;
+        lote.setQuantidadeDisponivel(vagasIniciais);
+
+
+        evento.getLotes().add(lote);
+
+        inscricaoCancelamento = new Inscricao(1L, participante, evento, lote, StatusInscricao.CONFIRMADA, LocalDateTime.now());
+        excecao = null;
+
+
+        when(inscricaoRepository.findById(1L)).thenReturn(Optional.of(inscricaoCancelamento));
+    }
+
+    @E("o evento está marcado para daqui a {int} dias")
+    public void evento_marcado_para_dias(int dias) {
+        evento.setDataHoraInicio(LocalDateTime.now().plusDays(dias));
+    }
+
+    @E("o evento está marcado para daqui a {int} horas")
+    public void evento_marcado_para_horas(int horas) {
+        evento.setDataHoraInicio(LocalDateTime.now().plusHours(horas));
+    }
+
+    @Quando("ele solicita o cancelamento da inscrição")
+    public void solicita_cancelamento() {
+        try {
+
+            cancelamentoService.executar(1L);
+        } catch (Exception e) {
+            excecao = e;
+        }
+    }
+
+    @Entao("a inscrição deve ser cancelada com sucesso")
+    public void inscricao_cancelada_com_sucesso() {
+        assertNull(excecao, "Não deveria ter ocorrido erro no cancelamento.");
+        assertEquals(StatusInscricao.CANCELADA, inscricaoCancelamento.getStatus());
+        verify(inscricaoRepository, times(1)).save(inscricaoCancelamento);
+    }
+
+    @E("o saldo do participante deve ser estornado")
+    public void saldo_estornado() {
+        assertEquals(saldoInicial + lote.getPreco().doubleValue(), participante.getSaldo(),
+                "O saldo do participante não foi estornado corretamente");
+
+        verify(pessoaRepository, times(1)).save(participante);
+    }
+
+    @E("a vaga deve voltar para o lote")
+    public void vaga_devolvida_ao_lote() {
+        assertEquals(vagasIniciais + 1, lote.getQuantidadeDisponivel(),
+                "A quantidade disponível no lote não foi incrementada");
+
+        verify(eventoRepository, times(1)).save(evento);
+    }
+
+    @Entao("o sistema deve rejeitar o cancelamento")
+    public void rejeitar_cancelamento() {
+        assertNotNull(excecao, "Uma exceção deveria ter sido lançada por estar fora do prazo");
+
+        assertEquals(StatusInscricao.CONFIRMADA, inscricaoCancelamento.getStatus());
+    }
+
+    @E("exibir uma mensagem de erro de prazo excedido")
+    public void exibir_mensagem_prazo_excedido() {
+        assertTrue(excecao instanceof InscricaoException, "Deveria ser uma InscricaoException");
+        String mensagemErro = excecao.getMessage().toLowerCase();
+        
+        assertTrue(mensagemErro.contains("fora do prazo"),
+                "A mensagem de erro não informou o motivo do bloqueio. Mensagem atual: " + excecao.getMessage());
     }
 }
