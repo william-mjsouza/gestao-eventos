@@ -1,9 +1,10 @@
 package com.gestaoeventos.bdd.config;
 
+import com.gestaoeventos.repository.AvaliacaoRepository;
 import com.gestaoeventos.repository.EventoRepository;
 import com.gestaoeventos.repository.FavoritoRepository;
-import com.gestaoeventos.repository.PessoaRepository;
 import com.gestaoeventos.repository.InscricaoRepository;
+import com.gestaoeventos.repository.PessoaRepository;
 import io.cucumber.spring.CucumberContextConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -12,7 +13,6 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 @SpringBootTest
 public class CucumberSpringConfiguration {
 
-    // Registramos todos os mocks da aplicação aqui
     @MockitoBean
     private PessoaRepository pessoaRepository;
 
@@ -24,5 +24,8 @@ public class CucumberSpringConfiguration {
 
     @MockitoBean
     private FavoritoRepository favoritoRepository;
+
+    @MockitoBean
+    private AvaliacaoRepository avaliacaoRepository;
 
 }
