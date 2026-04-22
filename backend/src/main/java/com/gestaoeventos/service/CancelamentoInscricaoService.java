@@ -26,6 +26,9 @@ public class CancelamentoInscricaoService {
     @Autowired
     private PessoaRepository pessoaRepository;
 
+    @Autowired
+    private ListaEsperaService listaEsperaService;
+
     @Transactional
     public Inscricao executar(Long inscricaoId) {
         Inscricao inscricao = inscricaoRepository.findById(inscricaoId)
@@ -42,26 +45,28 @@ public class CancelamentoInscricaoService {
         }
 
         // Se a inscrição já foi paga (CONFIRMADA), fazemos o estorno financeiro e devolução da vaga
-        if (inscricao.getStatus() == StatusInscricao.CONFIRMADA) {
+        boolean eraConfirmada = inscricao.getStatus() == StatusInscricao.CONFIRMADA;
+        if (eraConfirmada) {
             Pessoa participante = inscricao.getParticipante();
             Lote lote = inscricao.getLote();
 
-            // Tratamento caso o preço do lote seja nulo
             double valorLote = lote.getPreco() != null ? lote.getPreco().doubleValue() : 0.0;
 
-            // Devolve o dinheiro para o saldo do participante
             participante.setSaldo(participante.getSaldo() + valorLote);
-
-            // Libera a vaga de volta para o lote
             lote.setQuantidadeDisponivel(lote.getQuantidadeDisponivel() + 1);
 
-            // Salvamos as alterações no participante e no evento
             pessoaRepository.save(participante);
             eventoRepository.save(inscricao.getEvento());
         }
 
         inscricao.setStatus(StatusInscricao.CANCELADA);
+        Inscricao cancelada = inscricaoRepository.save(inscricao);
 
-        return inscricaoRepository.save(inscricao);
+        // Vaga liberada: notifica o próximo na lista de espera
+        if (eraConfirmada) {
+            listaEsperaService.processarVagaLiberada(inscricao.getEvento().getId());
+        }
+
+        return cancelada;
     }
 }

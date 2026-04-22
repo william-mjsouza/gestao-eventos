@@ -29,7 +29,6 @@ public class AvaliacaoService {
     private PessoaRepository pessoaRepository;
     public Avaliacao salvar(int nota, String comentario, Long eventoId, String cpf) {
 
-        // 1. Verificar se o evento existe
         Evento evento = eventoRepository.findById(eventoId)
                 .orElseThrow(() -> new AvaliacaoException("Evento não encontrado."));
 
@@ -38,18 +37,15 @@ public class AvaliacaoService {
             throw new AvaliacaoException("O formulário de avaliação só é desbloqueado após a realização do evento.");
         }
 
-        // 3. Regra de Negócio: O usuário tem inscrição confirmada?
         boolean estaInscrito = inscricaoRepository.existsByParticipanteCpfAndEventoId(cpf, eventoId);
 
         if (!estaInscrito) {
             throw new AvaliacaoException("Apenas usuários com inscrição confirmada podem avaliar.");
         }
 
-        // 4. Buscar a pessoa para vincular à avaliação
         Pessoa autor = pessoaRepository.findById(cpf)
                 .orElseThrow(() -> new AvaliacaoException("Usuário não encontrado."));
 
-        // 5. Criar e salvar a avaliação
         Avaliacao avaliacao = new Avaliacao();
         avaliacao.setNota(nota);
         avaliacao.setComentario(comentario);
