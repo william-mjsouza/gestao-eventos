@@ -45,7 +45,9 @@ https://projetorequisitos.atlassian.net/jira/software/projects/SCRUM/boards/1/ba
 .\mvnw spring-boot:run
 ```
 
-## Adicionar arquivo dentro de backend\src\main\resources
+## Configurações do banco
+- Criar pasta resources dentro de backend\src\main\
+- Dentro dessa pasta criar o **application.properties** e colocar o código abaixo
 ```
 spring.application.name=Sistema de Gestao de Eventos
 
