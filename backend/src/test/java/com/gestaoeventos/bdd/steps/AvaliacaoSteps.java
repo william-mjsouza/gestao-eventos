@@ -46,9 +46,6 @@ public class AvaliacaoSteps {
     private Avaliacao avaliacaoSalva;
     private Exception excecao;
 
-    // -----------------------------------------------------------------------
-    // Cenário 1: Avaliação pós-evento com sucesso
-    // -----------------------------------------------------------------------
 
     @Dado("que o participante compareceu ao evento")
     public void participante_compareceu_ao_evento() {
@@ -79,7 +76,6 @@ public class AvaliacaoSteps {
         evento.setDescricao("Evento encerrado");
         evento.setLocal("Centro de Convenções");
         evento.setCapacidade(500);
-        // Data no passado → evento já ocorreu → avaliação liberada
         evento.setDataHoraInicio(LocalDateTime.now().minusDays(1));
 
         when(eventoRepository.findById(evento.getId()))
@@ -118,10 +114,6 @@ public class AvaliacaoSteps {
                 "A avaliação deveria estar vinculada ao participante correto.");
     }
 
-    // -----------------------------------------------------------------------
-    // Cenário 2: Avaliação antecipada bloqueada
-    // -----------------------------------------------------------------------
-
     @Dado("que o participante está inscrito em um evento marcado para amanhã")
     public void participante_inscrito_em_evento_amanha() {
         excecao = null;
@@ -142,7 +134,6 @@ public class AvaliacaoSteps {
                 eq(participante.getCpf()), anyLong()))
                 .thenReturn(true);
 
-        // Evento marcado para amanhã → ainda não ocorreu → avaliação bloqueada
         evento = new Evento();
         evento.setId(2L);
         evento.setNome("Workshop de Amanhã");
@@ -157,7 +148,6 @@ public class AvaliacaoSteps {
 
     @Quando("ele acessa a página do evento")
     public void ele_acessa_pagina_do_evento() {
-        // Simula a tentativa de avaliar ao acessar a página — o service bloqueia
         try {
             avaliacaoService.salvar(5, "Antecipado!", evento.getId(), participante.getCpf());
         } catch (Exception e) {
@@ -172,10 +162,6 @@ public class AvaliacaoSteps {
                 "A exceção deveria ser uma AvaliacaoException.");
         verify(avaliacaoRepository, never()).save(any(Avaliacao.class));
     }
-
-    // -----------------------------------------------------------------------
-    // Cenário 3: Avaliação bloqueada para quem não tem inscrição confirmada
-    // -----------------------------------------------------------------------
 
     @Dado("que o usuário não possui inscrição confirmada no evento")
     public void usuario_sem_inscricao_confirmada() {
@@ -193,7 +179,6 @@ public class AvaliacaoSteps {
         when(pessoaRepository.findById(participante.getCpf()))
                 .thenReturn(Optional.of(participante));
 
-        // Sem inscrição confirmada
         when(inscricaoRepository.existsByParticipanteCpfAndEventoId(
                 eq(participante.getCpf()), anyLong()))
                 .thenReturn(false);
@@ -207,7 +192,6 @@ public class AvaliacaoSteps {
         evento.setDescricao("Evento que já aconteceu");
         evento.setLocal("Auditório A");
         evento.setCapacidade(200);
-        // Data no passado → evento encerrado
         evento.setDataHoraInicio(LocalDateTime.now().minusDays(2));
 
         when(eventoRepository.findById(evento.getId()))

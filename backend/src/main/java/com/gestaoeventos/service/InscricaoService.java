@@ -36,7 +36,7 @@ public class InscricaoService {
             throw new InscricaoException("Não é possível se inscrever em um evento encerrado.");
         }
 
-        long inscritos = inscricaoRepository.countByEventoId(eventoId);
+        long inscritos = inscricaoRepository.countByEventoIdAndStatusNot(eventoId, StatusInscricao.CANCELADA);
         if (inscritos >= evento.getCapacidade()) {
             throw new InscricaoException("O evento não possui mais vagas.");
         }

@@ -35,7 +35,7 @@ public class ListaEsperaService {
                 .orElseThrow(() -> new ListaEsperaException("Evento não encontrado."));
 
 
-        long inscritos = inscricaoRepository.countByEventoId(eventoId);
+        long inscritos = inscricaoRepository.countByEventoIdAndStatusNot(eventoId, StatusInscricao.CANCELADA);
         if (inscritos < evento.getCapacidade()) {
             throw new ListaEsperaException("O evento ainda possui vagas. Faça sua inscrição normalmente.");
         }

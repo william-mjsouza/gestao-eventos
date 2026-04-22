@@ -55,7 +55,7 @@ public class InscricaoSteps {
 
     @E("possui vagas")
     public void possui_vagas() {
-        when(inscricaoRepository.countByEventoId(1L)).thenReturn(50L);
+        when(inscricaoRepository.countByEventoIdAndStatusNot(1L, StatusInscricao.CANCELADA)).thenReturn(50L);
 
         lote = new Lote(1L, "Lote Padrão", new BigDecimal("100.00"), 100, 50, LocalDateTime.now(), LocalDateTime.now().plusDays(10));
         evento.getLotes().add(lote);

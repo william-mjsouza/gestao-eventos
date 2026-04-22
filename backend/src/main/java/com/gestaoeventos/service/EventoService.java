@@ -38,6 +38,13 @@ public class EventoService {
             throw new EventoException("Deve haver pelo menos um lote cadastrado na publicação.");
         }
 
+        // Regra 4b: Soma das vagas dos lotes não pode ultrapassar a capacidade do evento
+        int totalVagasLotes = evento.getLotes().stream().mapToInt(l -> l.getQuantidadeTotal()).sum();
+        if (totalVagasLotes > evento.getCapacidade()) {
+            throw new EventoException("A soma das vagas dos lotes (" + totalVagasLotes
+                    + ") ultrapassa a capacidade máxima do evento (" + evento.getCapacidade() + ").");
+        }
+
         // Regra 5: Nome único
         if (eventoRepository.existsByNome(evento.getNome())) {
             throw new EventoException("Já existe um evento cadastrado com este nome.");
