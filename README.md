@@ -43,3 +43,17 @@ https://projetorequisitos.atlassian.net/jira/software/projects/SCRUM/boards/1/ba
 
 ```bash
 .\mvnw spring-boot:run
+```
+
+## Adicionar arquivo dentro de backend\src\main\resources
+```
+spring.application.name=Sistema de Gestao de Eventos
+
+spring.datasource.url=jdbc:mysql://localhost:3306/gestao_eventos?createDatabaseIfNotExist=true&serverTimezone=UTC
+spring.datasource.username=root (USER DO MYSQL)
+spring.datasource.password= SENHA DO MYSQL
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.format_sql=true
+```
