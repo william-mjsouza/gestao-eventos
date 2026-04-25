@@ -10,6 +10,7 @@ import com.gestaoeventos.dominio.participante.pessoa.PessoaRepositorio;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.time.temporal.ChronoUnit;
 
 @Service
 public class InscricaoServico {
@@ -44,6 +45,19 @@ public class InscricaoServico {
 
         Pessoa participante = pessoaRepositorio.findById(cpf)
                 .orElseThrow(() -> new InscricaoException("Participante não encontrado."));
+
+        if (evento.getIdadeMinima() != null && evento.getIdadeMinima() > 0) {
+            long idadeNaDataDoEvento = ChronoUnit.YEARS.between(
+                    participante.getDataNascimento(),
+                    evento.getDataHoraInicio().toLocalDate()
+            );
+            if (idadeNaDataDoEvento < evento.getIdadeMinima()) {
+                throw new InscricaoException("Idade insuficiente. O participante terá " + idadeNaDataDoEvento +
+                        " anos na data do evento, o que é inferior à idade mínima de " +
+                        evento.getIdadeMinima() + " anos.");
+            }
+
+        }
 
         Lote lote = evento.getLotes().stream()
                 .filter(l -> l.getId().equals(loteId) && l.getQuantidadeDisponivel() > 0)
