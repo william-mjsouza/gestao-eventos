@@ -1,30 +1,19 @@
-#utf-8
 #language: pt
+#utf-8
 
-Funcionalidade: Inscrição em evento
 
-  Cenário: Inscrição registrada
-    Dado que o evento está ativo
-    E possui vagas
-    Quando o participante realiza o pagamento
-    Então o sistema deve inscrever o participante
+Funcionalidade: Processo de Inscrição em Eventos com Atomicidade
 
-  Cenário: Inscrição duplicada bloqueada
-    Dado que o usuário já está inscrito no evento
-    Quando ele tenta iniciar uma nova inscrição para o mesmo evento
-    Então o sistema deve alertar que ele já possui participação
+  Cenário: Inscrição realizada com sucesso
+    Dado que o usuário "user" possui saldo de 100.0
+    E o evento possui vaga no lote com preço de 60.0
+    Quando o usuário conclui a inscrição
+    Então o sistema deve confirmar a inscrição com sucesso
+    E o saldo do usuário "user" deve ser atualizado para 40.0
 
-  Cenário: Cancelar inscrição com antecedência
-    Dado que um participante possui uma inscrição confirmada
-    E o evento está marcado para daqui a 5 dias
-    Quando ele solicita o cancelamento da inscrição
-    Então a inscrição deve ser cancelada com sucesso
-    E o saldo do participante deve ser estornado
-    E a vaga deve voltar para o lote
-
-  Cenário: Cancelar inscrição fora do prazo
-    Dado que um participante possui uma inscrição confirmada
-    E o evento está marcado para daqui a 2 horas
-    Quando ele solicita o cancelamento da inscrição
-    Então o sistema deve rejeitar o cancelamento
-    E exibir uma mensagem de erro de prazo excedido
+  Cenário: Rollback por falha sistêmica
+    Dado que o usuário "user" possui saldo de 100.0
+    E o evento possui vaga no lote com preço de 60.0
+    Quando ocorre um erro técnico ao registrar a inscrição final
+    Então o sistema deve abortar a operação lançando um erro
+    E o saldo final do banco de dados não deve ser comprometido

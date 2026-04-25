@@ -20,7 +20,12 @@ import java.util.List;
 @Entity
 @Table(name = "EVENTO")
 public class Evento {
-
+    public Lote getLote(Long loteId) {
+        return lotes.stream()
+                .filter(l -> l.getId().equals(loteId))
+                .findFirst()
+                .orElseThrow(() -> new EventoException("Lote não encontrado no evento."));
+    }
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -57,4 +62,6 @@ public class Evento {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private StatusEvento status = StatusEvento.ATIVO;
+
+
 }

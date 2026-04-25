@@ -1,5 +1,6 @@
 package com.gestaoeventos.dominio.evento.lote;
 
+import com.gestaoeventos.dominio.evento.evento.EventoException;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -16,7 +17,16 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "LOTE")
 public class Lote {
+    public void baixarVaga() {
+        if (this.quantidadeDisponivel <= 0) {
+            throw new LoteException("Não há vagas disponíveis neste lote.");
+        }
+        this.quantidadeDisponivel--;
+    }
 
+    public Double getPreco() {
+        return preco != null ? preco.doubleValue() : null;
+    }
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

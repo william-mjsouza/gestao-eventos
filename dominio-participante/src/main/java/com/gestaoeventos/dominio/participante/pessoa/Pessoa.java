@@ -16,7 +16,12 @@ import org.hibernate.validator.constraints.br.CPF;
 @Entity
 @Table(name = "PESSOA")
 public class Pessoa {
-
+    public void debitarSaldo(Double valor) {
+        if (this.saldo == null || this.saldo < valor) {
+            throw new ParticipanteException("Saldo insuficiente para concluir a compra");
+        }
+        this.saldo -= valor;
+    }
     @Id
     @Column(length = 11)
     @CPF(message = "O CPF informado é inválido")
@@ -40,4 +45,5 @@ public class Pessoa {
 
     @Column(nullable = false)
     private Boolean organizador = false;
+
 }
