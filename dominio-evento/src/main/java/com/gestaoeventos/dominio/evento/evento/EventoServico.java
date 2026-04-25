@@ -29,6 +29,18 @@ public class EventoServico {
             throw new EventoException("A data e horário do evento devem ser futuros. Data inválida.");
         }
 
+        if (evento.getDataHoraTermino() == null) {
+            throw new EventoException("A data de término é obrigatória.");
+        }
+
+        if (evento.getDataHoraTermino().isBefore(evento.getDataHoraInicio()) || evento.getDataHoraTermino().isEqual(evento.getDataHoraInicio())) {
+            throw new EventoException("A data de término deve ser posterior à data de início.");
+        }
+
+        if (eventoRepositorio.existeColisaoLocalEHorario(evento.getLocal(), evento.getDataHoraInicio(), evento.getDataHoraTermino())) {
+            throw new EventoException("O local já está ocupado neste período.");
+        }
+
         if (evento.getLotes() == null || evento.getLotes().isEmpty()) {
             throw new EventoException("Deve haver pelo menos um lote cadastrado na publicação.");
         }
