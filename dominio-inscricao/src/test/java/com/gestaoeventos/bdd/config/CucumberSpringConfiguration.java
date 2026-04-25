@@ -1,6 +1,7 @@
 package com.gestaoeventos.bdd.config;
 
 import com.gestaoeventos.dominio.evento.evento.EventoRepositorio;
+import com.gestaoeventos.dominio.evento.evento.EventoServico;
 import com.gestaoeventos.dominio.inscricao.TestApplication;
 import com.gestaoeventos.dominio.inscricao.avaliacao.AvaliacaoRepositorio;
 import com.gestaoeventos.dominio.inscricao.favorito.FavoritoRepositorio;
@@ -20,6 +21,9 @@ public class CucumberSpringConfiguration {
 
     @MockitoBean
     private EventoRepositorio eventoRepositorio;
+
+    @MockitoBean
+    private EventoServico eventoServico;
 
     @MockitoBean
     private InscricaoRepositorio inscricaoRepositorio;
