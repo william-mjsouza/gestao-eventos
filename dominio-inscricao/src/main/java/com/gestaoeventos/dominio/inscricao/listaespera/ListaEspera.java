@@ -36,7 +36,4 @@ public class ListaEspera {
     private StatusListaEspera status = StatusListaEspera.AGUARDANDO;
 
     private LocalDateTime dataExpiracaoCarrinho;
-
-    @Column(nullable = false)
-    private LocalDateTime dataEntrada = LocalDateTime.now();
 }
