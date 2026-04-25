@@ -89,7 +89,11 @@ public class InscricaoSteps {
     public void usuario_ja_inscrito() {
         evento_ativo();
         possui_vagas();
-        when(inscricaoRepositorio.existsByParticipanteCpfAndEventoId(participante.getCpf(), evento.getId())).thenReturn(true);
+        when(inscricaoRepositorio.countByParticipanteCpfAndEventoIdAndStatusIn(
+                eq(participante.getCpf()), 
+                eq(evento.getId()), 
+                anyList()
+        )).thenReturn(1L); // Simula que ele já tem 1 ingresso e o limite padrao do evento também é 1
     }
 
     @Quando("ele tenta iniciar uma nova inscrição para o mesmo evento")
@@ -105,7 +109,7 @@ public class InscricaoSteps {
     public void sistema_alerta_participacao() {
         assertNotNull(excecao, "Uma exceção deveria ser lançada.");
         assertTrue(excecao instanceof InscricaoException);
-        assertEquals("Usuário já possui participação neste evento.", excecao.getMessage());
+        assertTrue(excecao.getMessage().contains("Limite de ingressos por usuário atingido"), "A mensagem deve relatar sobre limite excedido");
     }
 
     @Dado("que um participante possui uma inscrição confirmada")

@@ -32,4 +32,5 @@ public class CucumberSpringConfiguration {
 
     @MockitoBean
     private ListaEsperaRepositorio listaEsperaRepositorio;
+
 }
