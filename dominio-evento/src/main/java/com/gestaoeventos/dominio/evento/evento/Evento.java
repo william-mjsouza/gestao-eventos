@@ -57,4 +57,39 @@ public class Evento {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private StatusEvento status = StatusEvento.ATIVO;
+
+    @Transient
+    private List<Pessoa> listaEspera = new ArrayList<>();
+
+    public int getTotalVagasDisponiveis() {
+        return lotes.stream()
+                .mapToInt(Lote::getQuantidadeDisponivel)
+                .sum();
+    }
+
+    public int getTotalVagasOcupadas() {
+        return lotes.stream()
+                .mapToInt(lote -> lote.getQuantidadeTotal() - lote.getQuantidadeDisponivel())
+                .sum();
+    }
+    public boolean temVaga() {
+        return getTotalVagasOcupadas() < capacidade;
+    }
+
+    public boolean capacidadeValida() {
+        int totalLotes = lotes.stream()
+                .mapToInt(Lote::getQuantidadeTotal)
+                .sum();
+
+        return totalLotes <= capacidade;
+    }
+
+    public void adicionarNaListaEspera(Pessoa pessoa) {
+        listaEspera.add(pessoa);
+    }
+
+    public Pessoa proximoDaListaEspera() {
+        if (listaEspera.isEmpty()) return null;
+        return listaEspera.remove(0); // FIFO
+    }
 }

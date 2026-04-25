@@ -44,4 +44,21 @@ public class Lote {
     @Column(nullable = false)
     @NotNull(message = "A data de fim das vendas é obrigatória")
     private LocalDateTime dataFimVenda;
+
+    public boolean temVaga() {
+        return quantidadeDisponivel > 0;
+    }
+
+    public void ocuparVaga() {
+        if (!temVaga()) {
+            throw new RuntimeException("Lote esgotado");
+        }
+        quantidadeDisponivel--;
+    }
+
+    public void liberarVaga() {
+        if (quantidadeDisponivel < quantidadeTotal) {
+            quantidadeDisponivel++;
+        }
+    }
 }
