@@ -192,4 +192,65 @@ public class InscricaoSteps {
         assertTrue(mensagemErro.contains("48 horas"),
                 "A mensagem de erro não informou o motivo do bloqueio. Mensagem atual: " + excecao.getMessage());
     }
+
+    private Inscricao inscricaoPendenteAtomicidade;
+
+    @Dado("que o usuário tem saldo suficiente")
+    public void usuario_tem_saldo_suficiente() {
+        excecao = null;
+
+        participante = new Pessoa();
+        participante.setCpf("11122233344");
+        saldoInicial = 500.0;
+        participante.setSaldo(saldoInicial);
+        when(pessoaRepositorio.findById(participante.getCpf())).thenReturn(Optional.of(participante));
+
+        evento = new Evento();
+        evento.setId(99L);
+        evento.setCapacidade(100);
+
+        lote = new Lote();
+        lote.setId(99L);
+        lote.setPreco(new BigDecimal("100.00"));
+        vagasIniciais = 50;
+        lote.setQuantidadeDisponivel(vagasIniciais);
+
+        evento.getLotes().add(lote);
+    }
+
+    @E("aciona a finalização da compra")
+    public void aciona_finalizacao_da_compra() {
+        inscricaoPendenteAtomicidade = new Inscricao(
+                77L, participante, evento, lote, StatusInscricao.PENDENTE, LocalDateTime.now());
+        when(inscricaoRepositorio.findById(77L)).thenReturn(Optional.of(inscricaoPendenteAtomicidade));
+    }
+
+    @Quando("o sistema desconta o saldo, mas ocorre uma falha ao salvar a inscrição")
+    public void desconta_saldo_mas_falha_salvar_inscricao() {
+        when(inscricaoRepositorio.save(any(Inscricao.class)))
+                .thenThrow(new RuntimeException("Falha simulada ao persistir inscrição."));
+
+        try {
+            inscricaoServico.confirmarPagamento(77L, TipoPagamento.PIX);
+        } catch (Exception e) {
+            excecao = e;
+        }
+    }
+
+    @Entao("o sistema deve realizar um rollback")
+    public void sistema_deve_realizar_rollback() {
+        assertNotNull(excecao, "Uma exceção deveria ter sido lançada.");
+        assertTrue(excecao instanceof InscricaoException,
+                "A exceção deveria ser InscricaoException, mas foi: " + excecao.getClass().getSimpleName());
+        assertEquals(StatusInscricao.PENDENTE, inscricaoPendenteAtomicidade.getStatus(),
+                "A inscrição não deveria ter sido confirmada após o rollback.");
+        assertEquals(vagasIniciais, lote.getQuantidadeDisponivel(),
+                "A vaga do lote deveria ter sido devolvida no rollback.");
+    }
+
+    @E("o saldo do usuário deve retornar ao valor original")
+    public void saldo_retorna_ao_valor_original() {
+        assertEquals(saldoInicial, participante.getSaldo(),
+                "O saldo do participante deveria ter sido restaurado ao valor original.");
+    }
 }
