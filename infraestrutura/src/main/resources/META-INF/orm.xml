@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<entity-mappings
+    xmlns="https://jakarta.ee/xml/ns/persistence/orm"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="https://jakarta.ee/xml/ns/persistence/orm
+        https://jakarta.ee/xml/ns/persistence/orm/orm_3_1.xsd"
+    version="3.1">
+
+  <!-- ===== Pessoa ===== -->
+  <entity class="com.gestaoeventos.dominio.participante.pessoa.Pessoa" access="FIELD">
+    <table name="PESSOA"/>
+    <attributes>
+      <id name="cpf">
+        <column length="11"/>
+      </id>
+      <basic name="nome">
+        <column nullable="false"/>
+      </basic>
+      <basic name="email">
+        <column nullable="false" unique="true"/>
+      </basic>
+      <basic name="senha">
+        <column nullable="false"/>
+      </basic>
+      <basic name="saldo">
+        <column nullable="false"/>
+      </basic>
+      <basic name="organizador">
+        <column nullable="false"/>
+      </basic>
+      <basic name="dataNascimento">
+        <column nullable="false"/>
+      </basic>
+      <version name="versao"/>
+    </attributes>
+  </entity>
+
+  <!-- ===== Lote ===== -->
+  <entity class="com.gestaoeventos.dominio.evento.lote.Lote" access="FIELD">
+    <table name="LOTE"/>
+    <attributes>
+      <id name="id">
+        <generated-value strategy="IDENTITY"/>
+      </id>
+      <basic name="nome">
+        <column nullable="false"/>
+      </basic>
+      <basic name="preco">
+        <column nullable="false"/>
+      </basic>
+      <basic name="quantidadeTotal">
+        <column nullable="false"/>
+      </basic>
+      <basic name="quantidadeDisponivel">
+        <column nullable="false"/>
+      </basic>
+      <basic name="dataInicioVenda">
+        <column nullable="false"/>
+      </basic>
+      <basic name="dataFimVenda">
+        <column nullable="false"/>
+      </basic>
+    </attributes>
+  </entity>
+
+  <!-- ===== Evento ===== -->
+  <entity class="com.gestaoeventos.dominio.evento.evento.Evento" access="FIELD">
+    <table name="EVENTO"/>
+    <attributes>
+      <id name="id">
+        <generated-value strategy="IDENTITY"/>
+      </id>
+      <basic name="nome">
+        <column nullable="false" unique="true"/>
+      </basic>
+      <basic name="descricao">
+        <column nullable="false"/>
+      </basic>
+      <basic name="dataHoraInicio">
+        <column nullable="false"/>
+      </basic>
+      <basic name="dataHoraTermino">
+        <column nullable="false"/>
+      </basic>
+      <basic name="local">
+        <column nullable="false"/>
+      </basic>
+      <basic name="capacidade">
+        <column nullable="false"/>
+      </basic>
+      <basic name="limiteIngressosPorCpf">
+        <column nullable="false"/>
+      </basic>
+      <basic name="status">
+        <column nullable="false"/>
+        <enumerated>STRING</enumerated>
+      </basic>
+      <basic name="idadeMinima">
+        <column nullable="false"/>
+      </basic>
+      <many-to-one name="organizador" fetch="LAZY" optional="false">
+        <join-column name="organizador_cpf" nullable="false"/>
+      </many-to-one>
+      <one-to-many name="lotes" orphan-removal="true">
+        <join-column name="evento_id"/>
+        <cascade>
+          <cascade-all/>
+        </cascade>
+      </one-to-many>
+      <transient name="listaEspera"/>
+    </attributes>
+  </entity>
+
+  <!-- ===== Inscricao ===== -->
+  <entity class="com.gestaoeventos.dominio.inscricao.inscricao.Inscricao" access="FIELD">
+    <table name="INSCRICAO"/>
+    <attributes>
+      <id name="id">
+        <generated-value strategy="IDENTITY"/>
+      </id>
+      <basic name="status">
+        <column nullable="false"/>
+        <enumerated>STRING</enumerated>
+      </basic>
+      <basic name="dataReserva">
+        <column nullable="false"/>
+      </basic>
+      <basic name="cupomCodigo">
+        <column name="cupom_codigo"/>
+      </basic>
+      <many-to-one name="participante" fetch="LAZY" optional="false">
+        <join-column name="participante_cpf"/>
+      </many-to-one>
+      <many-to-one name="evento" fetch="LAZY" optional="false">
+        <join-column name="evento_id"/>
+      </many-to-one>
+      <many-to-one name="lote" fetch="LAZY" optional="false">
+        <join-column name="lote_id"/>
+      </many-to-one>
+    </attributes>
+  </entity>
+
+  <!-- ===== ListaEspera ===== -->
+  <entity class="com.gestaoeventos.dominio.inscricao.listaespera.ListaEspera" access="FIELD">
+    <table name="LISTA_ESPERA"/>
+    <attributes>
+      <id name="id">
+        <generated-value strategy="IDENTITY"/>
+      </id>
+      <basic name="posicao">
+        <column nullable="false"/>
+      </basic>
+      <basic name="status">
+        <column nullable="false"/>
+        <enumerated>STRING</enumerated>
+      </basic>
+      <basic name="dataExpiracaoCarrinho"/>
+      <many-to-one name="participante" fetch="LAZY" optional="false">
+        <join-column name="participante_cpf"/>
+      </many-to-one>
+      <many-to-one name="evento" fetch="LAZY" optional="false">
+        <join-column name="evento_id"/>
+      </many-to-one>
+    </attributes>
+  </entity>
+
+  <!-- ===== Avaliacao ===== -->
+  <entity class="com.gestaoeventos.dominio.inscricao.avaliacao.Avaliacao" access="FIELD">
+    <table name="AVALIACAO"/>
+    <attributes>
+      <id name="id">
+        <generated-value strategy="IDENTITY"/>
+      </id>
+      <basic name="nota">
+        <column nullable="false"/>
+      </basic>
+      <basic name="comentario"/>
+      <many-to-one name="evento" fetch="LAZY" optional="false">
+        <join-column name="evento_id" nullable="false"/>
+      </many-to-one>
+      <many-to-one name="pessoa" fetch="LAZY" optional="false">
+        <join-column name="pessoa_cpf" nullable="false"/>
+      </many-to-one>
+    </attributes>
+  </entity>
+
+  <!-- ===== Favorito ===== -->
+  <entity class="com.gestaoeventos.dominio.inscricao.favorito.Favorito" access="FIELD">
+    <table name="FAVORITO">
+      <unique-constraint>
+        <column-name>pessoa_cpf</column-name>
+        <column-name>evento_id</column-name>
+      </unique-constraint>
+    </table>
+    <attributes>
+      <id name="id">
+        <generated-value strategy="IDENTITY"/>
+      </id>
+      <basic name="dataFavoritado"/>
+      <many-to-one name="pessoa" fetch="LAZY" optional="false">
+        <join-column name="pessoa_cpf"/>
+      </many-to-one>
+      <many-to-one name="evento" fetch="LAZY" optional="false">
+        <join-column name="evento_id"/>
+      </many-to-one>
+    </attributes>
+  </entity>
+
+  <!-- ===== Carrinho ===== -->
+  <entity class="com.gestaoeventos.dominio.inscricao.carrinho.Carrinho" access="FIELD">
+    <table name="CARRINHO"/>
+    <attributes>
+      <id name="id">
+        <generated-value strategy="IDENTITY"/>
+      </id>
+      <basic name="dataAdicao">
+        <column nullable="false"/>
+      </basic>
+      <many-to-one name="participante" fetch="LAZY" optional="false">
+        <join-column name="participante_cpf"/>
+      </many-to-one>
+      <many-to-one name="evento" fetch="LAZY" optional="false">
+        <join-column name="evento_id"/>
+      </many-to-one>
+      <many-to-one name="lote" fetch="LAZY" optional="false">
+        <join-column name="lote_id"/>
+      </many-to-one>
+    </attributes>
+  </entity>
+
+  <!-- ===== Cupom ===== -->
+  <entity class="com.gestaoeventos.dominio.inscricao.cupom.Cupom" access="FIELD">
+    <table name="CUPOM"/>
+    <attributes>
+      <id name="codigo">
+        <column name="codigo" nullable="false" updatable="false"/>
+      </id>
+      <basic name="limiteUsoGeral">
+        <column name="limite_uso_geral" nullable="false"/>
+      </basic>
+      <basic name="usosAtuais">
+        <column name="usos_atuais" nullable="false"/>
+      </basic>
+    </attributes>
+  </entity>
+
+</entity-mappings>

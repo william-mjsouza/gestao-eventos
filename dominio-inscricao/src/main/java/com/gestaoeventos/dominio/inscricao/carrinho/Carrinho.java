@@ -3,35 +3,43 @@ package com.gestaoeventos.dominio.inscricao.carrinho;
 import com.gestaoeventos.dominio.evento.evento.Evento;
 import com.gestaoeventos.dominio.evento.lote.Lote;
 import com.gestaoeventos.dominio.participante.pessoa.Pessoa;
-import jakarta.persistence.*;
-import lombok.*;
 
 import java.time.LocalDateTime;
 
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Entity
-@Table(name = "CARRINHO")
 public class Carrinho {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "participante_cpf")
     private Pessoa participante;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "evento_id")
     private Evento evento;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "lote_id")
     private Lote lote;
 
-    @Column(nullable = false)
     private LocalDateTime dataAdicao = LocalDateTime.now();
+
+    public Carrinho() {}
+
+    public Carrinho(Long id, Pessoa participante, Evento evento, Lote lote, LocalDateTime dataAdicao) {
+        this.id = id;
+        this.participante = participante;
+        this.evento = evento;
+        this.lote = lote;
+        this.dataAdicao = dataAdicao;
+    }
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public Pessoa getParticipante() { return participante; }
+    public void setParticipante(Pessoa participante) { this.participante = participante; }
+
+    public Evento getEvento() { return evento; }
+    public void setEvento(Evento evento) { this.evento = evento; }
+
+    public Lote getLote() { return lote; }
+    public void setLote(Lote lote) { this.lote = lote; }
+
+    public LocalDateTime getDataAdicao() { return dataAdicao; }
+    public void setDataAdicao(LocalDateTime dataAdicao) { this.dataAdicao = dataAdicao; }
 }

@@ -4,43 +4,26 @@ import com.gestaoeventos.dominio.compartilhado.StatusInscricao;
 import com.gestaoeventos.dominio.evento.evento.Evento;
 import com.gestaoeventos.dominio.evento.lote.Lote;
 import com.gestaoeventos.dominio.participante.pessoa.Pessoa;
-import jakarta.persistence.*;
-import lombok.*;
 
 import java.time.LocalDateTime;
 
-@Getter
-@Setter
-@NoArgsConstructor
-@Entity
-@Table(name = "INSCRICAO")
 public class Inscricao {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "participante_cpf")
     private Pessoa participante;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "evento_id")
     private Evento evento;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "lote_id")
     private Lote lote;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
     private StatusInscricao status = StatusInscricao.PENDENTE;
 
-    @Column(nullable = false)
     private LocalDateTime dataReserva = LocalDateTime.now();
 
-    @Column(name = "cupom_codigo")
     private String cupomCodigo;
+
+    public Inscricao() {}
 
     public Inscricao(Long id, Pessoa participante, Evento evento, Lote lote,
                      StatusInscricao status, LocalDateTime dataReserva) {
@@ -51,4 +34,25 @@ public class Inscricao {
         this.status = status;
         this.dataReserva = dataReserva;
     }
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public Pessoa getParticipante() { return participante; }
+    public void setParticipante(Pessoa participante) { this.participante = participante; }
+
+    public Evento getEvento() { return evento; }
+    public void setEvento(Evento evento) { this.evento = evento; }
+
+    public Lote getLote() { return lote; }
+    public void setLote(Lote lote) { this.lote = lote; }
+
+    public StatusInscricao getStatus() { return status; }
+    public void setStatus(StatusInscricao status) { this.status = status; }
+
+    public LocalDateTime getDataReserva() { return dataReserva; }
+    public void setDataReserva(LocalDateTime dataReserva) { this.dataReserva = dataReserva; }
+
+    public String getCupomCodigo() { return cupomCodigo; }
+    public void setCupomCodigo(String cupomCodigo) { this.cupomCodigo = cupomCodigo; }
 }
