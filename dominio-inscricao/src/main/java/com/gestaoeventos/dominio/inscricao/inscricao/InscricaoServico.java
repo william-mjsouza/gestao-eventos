@@ -4,6 +4,7 @@ import com.gestaoeventos.dominio.compartilhado.StatusEvento;
 import com.gestaoeventos.dominio.compartilhado.StatusInscricao;
 import com.gestaoeventos.dominio.evento.evento.*;
 import com.gestaoeventos.dominio.evento.lote.Lote;
+import com.gestaoeventos.dominio.inscricao.cupom.CupomServico;
 import com.gestaoeventos.dominio.participante.pessoa.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -34,6 +35,9 @@ public class InscricaoServico {
     @Autowired
     private PessoaServico pessoaServico;
 
+    @Autowired
+    private CupomServico cupomServico;
+
     @Transactional
     public Inscricao iniciarInscricao(String cpf, Long eventoId, Long loteId) {
         Evento evento = eventoRepositorio.findById(eventoId)
@@ -58,9 +62,6 @@ public class InscricaoServico {
         if (inscritos >= evento.getCapacidade()) {
             throw new InscricaoException("O evento não possui mais vagas.");
         }
-
-        Pessoa participante = pessoaRepositorio.findById(cpf)
-                .orElseThrow(() -> new InscricaoException("Participante não encontrado."));
 
         if (evento.getIdadeMinima() != null && evento.getIdadeMinima() > 0) {
             long idadeNaDataDoEvento = ChronoUnit.YEARS.between(
@@ -88,9 +89,13 @@ public class InscricaoServico {
         return inscricaoRepositorio.save(inscricao);
     }
 
-    @Transactional
-
+    @Transactional(rollbackFor = Exception.class)
     public Inscricao confirmarPagamento(Long inscricaoId, TipoPagamento tipoPagamento) {
+        return confirmarPagamento(inscricaoId, tipoPagamento, null);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public Inscricao confirmarPagamento(Long inscricaoId, TipoPagamento tipoPagamento, String codigoCupom) {
         Inscricao inscricao = inscricaoRepositorio.findById(inscricaoId)
                 .orElseThrow(() -> new InscricaoException("Inscrição não encontrada."));
 
@@ -102,13 +107,27 @@ public class InscricaoServico {
         Lote lote = inscricao.getLote();
         double valorBase = lote.getPreco().doubleValue();
 
-        pessoaServico.debitarSaldo(participante.getCpf(), valorBase, tipoPagamento);
-        
-        lote.setQuantidadeDisponivel(lote.getQuantidadeDisponivel() - 1);
-        inscricao.setStatus(StatusInscricao.CONFIRMADA);
+        if (codigoCupom != null && !codigoCupom.isBlank()) {
+            cupomServico.validarEAplicar(codigoCupom, participante.getCpf(), inscricao.getEvento().getId());
+            inscricao.setCupomCodigo(codigoCupom);
+        }
 
-        pessoaRepositorio.save(participante);
-        eventoRepositorio.save(inscricao.getEvento());
-        return inscricaoRepositorio.save(inscricao);
+        double saldoAntesDoDebito = participante.getSaldo();
+        int vagasAntesDoDebito = lote.getQuantidadeDisponivel();
+
+        pessoaServico.debitarSaldo(participante.getCpf(), valorBase, tipoPagamento);
+
+        try {
+            lote.setQuantidadeDisponivel(vagasAntesDoDebito - 1);
+            inscricao.setStatus(StatusInscricao.CONFIRMADA);
+
+            pessoaRepositorio.save(participante);
+            eventoRepositorio.save(inscricao.getEvento());
+            return inscricaoRepositorio.save(inscricao);
+        } catch (Exception e) {
+            participante.setSaldo(saldoAntesDoDebito);
+            lote.setQuantidadeDisponivel(vagasAntesDoDebito);
+            throw new InscricaoException("Falha ao gerar ingresso. Operação revertida.");
+        }
     }
 }
