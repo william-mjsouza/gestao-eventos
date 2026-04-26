@@ -6,12 +6,9 @@ import com.gestaoeventos.dominio.inscricao.inscricao.*;
 import com.gestaoeventos.dominio.participante.pessoa.*;
 import com.gestaoeventos.dominio.compartilhado.*;
 import io.cucumber.java.pt.*;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
 import org.junit.jupiter.api.Assertions;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.support.TransactionTemplate;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -20,12 +17,6 @@ import java.util.List;
 import java.util.Optional;
 
 public class controleHorarioSteps {
-
-    @PersistenceContext
-    private EntityManager em;
-
-    @Autowired
-    private TransactionTemplate transactionTemplate;
 
     @Autowired
     private InscricaoServico inscricaoServico;

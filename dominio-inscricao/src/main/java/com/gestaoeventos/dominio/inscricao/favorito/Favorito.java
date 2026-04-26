@@ -1,35 +1,38 @@
 package com.gestaoeventos.dominio.inscricao.favorito;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.gestaoeventos.dominio.evento.evento.Evento;
 import com.gestaoeventos.dominio.participante.pessoa.Pessoa;
-import jakarta.persistence.*;
-import lombok.*;
 
 import java.time.LocalDateTime;
 
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Entity
-@Table(name = "FAVORITO", uniqueConstraints = {
-        @UniqueConstraint(columnNames = {"pessoa_cpf", "evento_id"})
-})
 public class Favorito {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+
     private Long id;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "pessoa_cpf")
-    @JsonIgnoreProperties({"senha", "saldo", "favoritos"})
     private Pessoa pessoa;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "evento_id")
-    @JsonIgnoreProperties({"lotes", "favoritos"})
     private Evento evento;
 
     private LocalDateTime dataFavoritado = LocalDateTime.now();
+
+    public Favorito() {}
+
+    public Favorito(Long id, Pessoa pessoa, Evento evento, LocalDateTime dataFavoritado) {
+        this.id = id;
+        this.pessoa = pessoa;
+        this.evento = evento;
+        this.dataFavoritado = dataFavoritado;
+    }
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public Pessoa getPessoa() { return pessoa; }
+    public void setPessoa(Pessoa pessoa) { this.pessoa = pessoa; }
+
+    public Evento getEvento() { return evento; }
+    public void setEvento(Evento evento) { this.evento = evento; }
+
+    public LocalDateTime getDataFavoritado() { return dataFavoritado; }
+    public void setDataFavoritado(LocalDateTime dataFavoritado) { this.dataFavoritado = dataFavoritado; }
 }

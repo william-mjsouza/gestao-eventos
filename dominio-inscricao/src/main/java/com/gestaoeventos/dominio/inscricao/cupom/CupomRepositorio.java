@@ -1,8 +1,8 @@
 package com.gestaoeventos.dominio.inscricao.cupom;
 
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
+import java.util.Optional;
 
-@Repository
-public interface CupomRepositorio extends JpaRepository<Cupom, String> {
+public interface CupomRepositorio {
+    Optional<Cupom> findById(String codigo);
+    Cupom save(Cupom cupom);
 }

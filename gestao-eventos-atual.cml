@@ -1,0 +1,358 @@
+Domain GestaoEventos {
+	Subdomain Evento {
+		domainVisionStatement = "Gerencia eventos, lotes de ingressos e relatórios de ocupação/receita."
+	}
+	Subdomain Inscricao {
+		domainVisionStatement = "Gerencia o ciclo de vida da inscrição de um participante: reserva, pagamento, cancelamento, lista de espera, carrinho, cupons, avaliação e favoritos."
+	}
+	Subdomain Participante {
+		domainVisionStatement = "Cadastro de pessoas, autenticação e controle de saldo da carteira virtual."
+	}
+}
+
+ContextMap GestaoEventosMap {
+	contains EventoContext
+	contains InscricaoContext
+	contains ParticipanteContext
+
+	/* Evento usa identidade/dados de Pessoa (organizador) */
+	EventoContext [SK] <-> [SK] ParticipanteContext
+
+	/* Inscrição depende fortemente de Evento e Participante */
+	InscricaoContext [SK] <-> [SK] EventoContext
+	InscricaoContext [SK] <-> [SK] ParticipanteContext
+}
+
+/* =====================================================================
+ * BoundedContext: Participante
+ * ===================================================================== */
+BoundedContext ParticipanteContext implements Participante {
+	type = FEATURE
+	implementationTechnology = "Java 17, Spring Boot 3.5"
+
+	Aggregate Pessoa {
+		Entity Pessoa {
+			aggregateRoot
+
+			- PessoaId cpf
+			String nome
+			String email
+			String senha
+			Double saldo
+			Boolean organizador
+			Date dataNascimento
+			Long versao
+		}
+
+		ValueObject PessoaId {
+			String cpf
+		}
+
+		enum TipoPagamento {
+			PIX, CARTAO
+		}
+
+		Service PessoaServico {
+			@Pessoa salvar(@Pessoa pessoa);
+			@Pessoa autenticar(String email, String senha);
+			void debitarSaldo(String cpf, double valorBase, TipoPagamento tipoPagamento);
+			void estornarSaldo(String cpf, double valor);
+		}
+
+		Repository PessoaRepositorio {
+			@Pessoa obter(@PessoaId cpf);
+			boolean existePorCpf(String cpf);
+			boolean existePorEmail(String email);
+			void salvar(@Pessoa pessoa);
+		}
+	}
+}
+
+/* =====================================================================
+ * BoundedContext: Evento
+ * ===================================================================== */
+BoundedContext EventoContext implements Evento {
+	type = FEATURE
+	implementationTechnology = "Java 17, Spring Boot 3.5"
+
+	Aggregate Evento {
+		Entity Evento {
+			aggregateRoot
+
+			- EventoId id
+			String nome
+			String descricao
+			Date dataHoraInicio
+			Date dataHoraTermino
+			String local
+			int capacidade
+			int limiteIngressosPorCpf
+			- PessoaId organizador
+			- List<LoteId> lotes
+			StatusEvento status
+			- List<PessoaId> listaEspera
+			Integer idadeMinima
+		}
+
+		ValueObject EventoId {
+			Long id
+		}
+
+		enum StatusEvento {
+			ATIVO, CANCELADO, ENCERRADO
+		}
+
+		DomainEvent EventoCanceladoEvent {
+			- EventoId eventoId
+		}
+
+		Service EventoServico {
+			void salvar(@Evento evento);
+			void alterarStatus(@EventoId id, StatusEvento novoStatus);
+			void cancelar(@EventoId id);
+			boolean validarIdadeMinima(@EventoId eventoId, @PessoaId cpf);
+		}
+
+		Repository EventoRepositorio {
+			@Evento obter(@EventoId id);
+			boolean existePorNome(String nome);
+			void salvar(@Evento evento);
+		}
+	}
+
+	Aggregate Lote {
+		Entity Lote {
+			aggregateRoot
+
+			- LoteId id
+			String nome
+			BigDecimal preco
+			int quantidadeTotal
+			int quantidadeDisponivel
+			Date dataInicioVenda
+			Date dataFimVenda
+		}
+
+		ValueObject LoteId {
+			Long id
+		}
+
+		Service LoteServico {
+			@Lote obterLoteAtivo(@EventoId eventoId);
+			void reservarVaga(@LoteId loteId);
+			void liberarVaga(@LoteId loteId);
+		}
+
+		Repository LoteRepositorio {
+			@Lote obter(@LoteId id);
+			void salvar(@Lote lote);
+		}
+	}
+
+	Aggregate Relatorio {
+		ValueObject RelatorioOcupacaoReceita {
+			- EventoId eventoId
+			String nomeEvento
+			int vagasTotais
+			int vagasOcupadas
+			BigDecimal receitaTotal
+			double taxaOcupacao
+		}
+
+		Service RelatorioServico {
+			@RelatorioOcupacaoReceita gerarOcupacaoReceita(@EventoId eventoId);
+		}
+
+		Repository RelatorioRepositorio {
+			BigDecimal calcularReceitaPorEvento(@EventoId eventoId);
+		}
+	}
+}
+
+/* =====================================================================
+ * BoundedContext: Inscricao
+ * ===================================================================== */
+BoundedContext InscricaoContext implements Inscricao {
+	type = FEATURE
+	implementationTechnology = "Java 17, Spring Boot 3.5"
+
+	Aggregate Inscricao {
+		Entity Inscricao {
+			aggregateRoot
+
+			- InscricaoId id
+			- PessoaId participante
+			- EventoId evento
+			- LoteId lote
+			StatusInscricao status
+			Date dataReserva
+			String cupomCodigo
+		}
+
+		ValueObject InscricaoId {
+			Long id
+		}
+
+		enum StatusInscricao {
+			PENDENTE, CONFIRMADA, CANCELADA, CANCELADA_PELO_ORGANIZADOR
+		}
+
+		DomainEvent InscricaoConfirmadaEvent {
+			- InscricaoId inscricaoId
+			- EventoId eventoId
+		}
+
+		DomainEvent VagaLiberadaFilaEvent {
+			- EventoId eventoId
+		}
+
+		Service InscricaoServico {
+			@Inscricao iniciarInscricao(@PessoaId cpf, @EventoId eventoId, @LoteId loteId);
+			@Inscricao confirmarPagamento(@InscricaoId id, TipoPagamento tipoPagamento);
+		}
+
+		Service CancelamentoInscricaoServico {
+			void cancelar(@InscricaoId id);
+		}
+
+		Service CancelamentoEmCascataServico {
+			void cancelarTodasDoEvento(@EventoId eventoId);
+		}
+
+		Repository InscricaoRepositorio {
+			@Inscricao obter(@InscricaoId id);
+			boolean existePorParticipanteEEvento(@PessoaId cpf, @EventoId eventoId);
+			long contarPorEventoComStatusDiferente(@EventoId eventoId, StatusInscricao status);
+			List<@Inscricao> buscarPorEvento(@EventoId eventoId);
+		}
+	}
+
+	Aggregate ListaEspera {
+		Entity ListaEspera {
+			aggregateRoot
+
+			- ListaEsperaId id
+			- PessoaId participante
+			- EventoId evento
+			int posicao
+			StatusListaEspera status
+			Date dataExpiracaoCarrinho nullable
+		}
+
+		ValueObject ListaEsperaId {
+			Long id
+		}
+
+		enum StatusListaEspera {
+			AGUARDANDO, CARRINHO, CONFIRMADO, EXPIRADO
+		}
+
+		Service ListaEsperaServico {
+			@ListaEspera entrarNaFila(@PessoaId cpf, @EventoId eventoId);
+			void processarVagaLiberada(@EventoId eventoId);
+			@ListaEspera confirmarPagamento(@PessoaId cpf, @EventoId eventoId);
+		}
+
+		Repository ListaEsperaRepositorio {
+			List<@ListaEspera> buscarPorEvento(@EventoId eventoId);
+			void salvar(@ListaEspera listaEspera);
+		}
+	}
+
+	Aggregate Carrinho {
+		Entity Carrinho {
+			aggregateRoot
+
+			- CarrinhoId id
+			- PessoaId participante
+			- EventoId evento
+			- LoteId lote
+			Date dataAdicao
+		}
+
+		ValueObject CarrinhoId {
+			Long id
+		}
+
+		Service CarrinhoServico {
+			@Carrinho adicionar(@PessoaId cpf, @EventoId eventoId, @LoteId loteId);
+			void remover(@CarrinhoId id);
+		}
+
+		Repository CarrinhoRepositorio {
+			@Carrinho obter(@CarrinhoId id);
+			void salvar(@Carrinho carrinho);
+		}
+	}
+
+	Aggregate Cupom {
+		Entity Cupom {
+			aggregateRoot
+
+			String codigo
+			int limiteUsoGeral
+			int usosAtuais
+		}
+
+		Service CupomServico {
+			@Cupom validar(String codigo);
+			void registrarUso(String codigo);
+		}
+
+		Repository CupomRepositorio {
+			@Cupom obterPorCodigo(String codigo);
+			void salvar(@Cupom cupom);
+		}
+	}
+
+	Aggregate Avaliacao {
+		Entity Avaliacao {
+			aggregateRoot
+
+			- AvaliacaoId id
+			int nota
+			String comentario nullable
+			- EventoId evento
+			- PessoaId pessoa
+		}
+
+		ValueObject AvaliacaoId {
+			Long id
+		}
+
+		Service AvaliacaoServico {
+			@Avaliacao salvar(int nota, String comentario, @EventoId eventoId, @PessoaId cpf);
+		}
+
+		Repository AvaliacaoRepositorio {
+			List<@Avaliacao> buscarPorEvento(@EventoId eventoId);
+			void salvar(@Avaliacao avaliacao);
+		}
+	}
+
+	Aggregate Favorito {
+		Entity Favorito {
+			aggregateRoot
+
+			- FavoritoId id
+			- PessoaId pessoa
+			- EventoId evento
+			Date dataFavoritado
+		}
+
+		ValueObject FavoritoId {
+			Long id
+		}
+
+		Service FavoritoServico {
+			String alternar(@PessoaId cpf, @EventoId eventoId);
+			List<@Favorito> listar(@PessoaId cpf);
+		}
+
+		Repository FavoritoRepositorio {
+			boolean existePorPessoaEEvento(@PessoaId cpf, @EventoId eventoId);
+			void salvar(@Favorito favorito);
+			void remover(@FavoritoId id);
+		}
+	}
+}
