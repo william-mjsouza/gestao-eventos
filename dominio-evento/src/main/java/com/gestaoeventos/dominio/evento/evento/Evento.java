@@ -38,6 +38,10 @@ public class Evento {
     private LocalDateTime dataHoraInicio;
 
     @Column(nullable = false)
+    @NotNull(message = "A data e horário de término são obrigatórios")
+    private LocalDateTime dataHoraTermino;
+
+    @Column(nullable = false)
     @NotBlank(message = "O local é obrigatório")
     private String local;
 

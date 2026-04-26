@@ -23,6 +23,7 @@ BoundedContext Evento implements Evento {
 			String nome
 			String descricao
 			Date dataHoraInicio
+			Date dataHoraTermino
 			String local
 			int capacidade
 			-PessoaId organizador

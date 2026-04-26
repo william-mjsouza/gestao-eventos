@@ -15,3 +15,9 @@ Funcionalidade: Cadastro evento
     Quando ele tenta criar um evento com a data de início anterior ao dia de hoje
     Então o sistema deve rejeitar a criação
     E exibir uma mensagem de erro de data inválida
+
+  Cenario: Colisão de local físico identificada
+    Dado que já existe o Evento A cadastrado no "Auditório Principal" para dia 20 das 08h às 12h
+    Quando o organizador tenta criar o Evento B no "Auditório Principal" para o dia 20 das 10h às 14h
+    Então o sistema deve rejeitar a criação
+    E exibir mensagem informando que o local está ocupado naquele período

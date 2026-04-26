@@ -58,6 +58,7 @@ public class EventoSteps {
         evento.setLocal("Centro de Convenções");
         evento.setCapacidade(500);
         evento.setDataHoraInicio(LocalDateTime.now().plusDays(30));
+        evento.setDataHoraTermino(LocalDateTime.now().plusDays(30).plusHours(5));
         evento.setIdadeMinima(18);
 
         when(eventoRepositorio.existsByNome(evento.getNome())).thenReturn(false);
@@ -98,6 +99,7 @@ public class EventoSteps {
         evento.setLocal("Teatro Municipal");
         evento.setCapacidade(200);
         evento.setDataHoraInicio(LocalDateTime.now().minusDays(5));
+        evento.setDataHoraTermino(LocalDateTime.now().minusDays(5).plusHours(2));
         evento.setIdadeMinima(18);
 
         adiciona_lote_valido();
@@ -120,5 +122,45 @@ public class EventoSteps {
         assertTrue(excecao instanceof EventoException, "A exceção lançada deveria ser uma EventoException");
         String mensagemErro = excecao.getMessage().toLowerCase();
         assertTrue(mensagemErro.contains("data"), "A mensagem de erro deveria mencionar o problema com a data");
+    }
+
+    @Dado("que já existe o Evento A cadastrado no {string} para dia {int} das {int}h às {int}h")
+    public void que_ja_existe_o_evento_cadastrado(String local, int dia, int horaInicio, int horaTermino) {
+        usuario_e_organizador_valido();
+        
+        when(eventoRepositorio.existeColisaoLocalEHorario(eq(local), any(LocalDateTime.class), any(LocalDateTime.class)))
+            .thenReturn(true);
+    }
+
+    @Quando("o organizador tenta criar o Evento B no {string} para o dia {int} das {int}h às {int}h")
+    public void organizador_tenta_criar_evento_b(String local, int dia, int horaInicio, int horaTermino) {
+        evento.setNome("Evento B");
+        evento.setDescricao("Conflito de horario");
+        evento.setLocal(local);
+        evento.setCapacidade(100);
+        
+        LocalDateTime dataInicio = LocalDateTime.now().withDayOfMonth(dia).withHour(horaInicio).withMinute(0).withSecond(0);
+        if (dataInicio.isBefore(LocalDateTime.now())) {
+            dataInicio = dataInicio.plusMonths(1);
+        }
+        LocalDateTime dataTermino = dataInicio.withHour(horaTermino);
+        
+        evento.setDataHoraInicio(dataInicio);
+        evento.setDataHoraTermino(dataTermino);
+        
+        adiciona_lote_valido();
+
+        try {
+            eventoServico.salvar(evento);
+        } catch (Exception e) {
+            excecao = e;
+        }
+    }
+
+    @E("exibir mensagem informando que o local está ocupado naquele período")
+    public void exibir_mensagem_local_ocupado() {
+        assertNotNull(excecao, "Deveria ter lançado uma exceção de colisão");
+        assertTrue(excecao instanceof EventoException);
+        assertTrue(excecao.getMessage().contains("local já está ocupado"));
     }
 }
