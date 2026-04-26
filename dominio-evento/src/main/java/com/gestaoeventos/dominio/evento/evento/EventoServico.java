@@ -1,9 +1,12 @@
 package com.gestaoeventos.dominio.evento.evento;
 
+import com.gestaoeventos.dominio.evento.lote.LoteServico;
+import com.gestaoeventos.dominio.evento.lote.Lote;
 import com.gestaoeventos.dominio.compartilhado.StatusEvento;
 import com.gestaoeventos.dominio.participante.pessoa.Pessoa;
 import com.gestaoeventos.dominio.participante.pessoa.PessoaRepositorio;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -12,10 +15,16 @@ import java.time.LocalDateTime;
 public class EventoServico {
 
     @Autowired
+    private LoteServico loteServico;
+
+    @Autowired
     private EventoRepositorio eventoRepositorio;
 
     @Autowired
     private PessoaRepositorio pessoaRepositorio;
+
+    @Autowired
+    private ApplicationEventPublisher eventPublisher;
 
     public Evento salvar(Evento evento) {
         Pessoa organizador = pessoaRepositorio.findById(evento.getOrganizador().getCpf())
@@ -27,6 +36,18 @@ public class EventoServico {
 
         if (evento.getDataHoraInicio() != null && evento.getDataHoraInicio().isBefore(LocalDateTime.now())) {
             throw new EventoException("A data e horário do evento devem ser futuros. Data inválida.");
+        }
+
+        if (evento.getDataHoraTermino() == null) {
+            throw new EventoException("A data de término é obrigatória.");
+        }
+
+        if (evento.getDataHoraTermino().isBefore(evento.getDataHoraInicio()) || evento.getDataHoraTermino().isEqual(evento.getDataHoraInicio())) {
+            throw new EventoException("A data de término deve ser posterior à data de início.");
+        }
+
+        if (eventoRepositorio.existeColisaoLocalEHorario(evento.getLocal(), evento.getDataHoraInicio(), evento.getDataHoraTermino())) {
+            throw new EventoException("O local já está ocupado neste período.");
         }
 
         if (evento.getLotes() == null || evento.getLotes().isEmpty()) {
@@ -60,6 +81,57 @@ public class EventoServico {
         }
 
         evento.setStatus(novoStatus);
-        return eventoRepositorio.save(evento);
+        Evento salvo = eventoRepositorio.save(evento);
+
+        if (novoStatus == StatusEvento.CANCELADO) {
+            eventPublisher.publishEvent(new EventoCanceladoEvent(eventoId));
+        }
+
+        return salvo;
+    }
+
+    public String inscrever(Long eventoId, String cpfPessoa) {
+        Evento evento = eventoRepositorio.findById(eventoId)
+                .orElseThrow(() -> new EventoException("Evento não encontrado."));
+
+        Pessoa pessoa = pessoaRepositorio.findById(cpfPessoa)
+                .orElseThrow(() -> new EventoException("Pessoa não encontrada."));
+
+        Lote loteAtivo;
+        try {
+            loteAtivo = loteServico.obterLoteAtivo(eventoId);
+        } catch (Exception e) {
+            loteAtivo = null;
+        }
+
+        if (loteAtivo != null && loteAtivo.temVaga() && evento.temVaga()) {
+            loteAtivo.ocuparVaga();
+            eventoRepositorio.save(evento);
+            return "Inscrição confirmada";
+        } else {
+            evento.adicionarNaListaEspera(pessoa);
+            eventoRepositorio.save(evento);
+            return "Adicionado à lista de espera";
+        }
+    }
+
+    public void cancelar(Long eventoId) {
+        Evento evento = eventoRepositorio.findById(eventoId)
+                .orElseThrow(() -> new EventoException("Evento não encontrado."));
+
+        Lote lote = evento.getLotes().stream()
+                .filter(l -> l.getQuantidadeDisponivel() < l.getQuantidadeTotal())
+                .findFirst()
+                .orElseThrow(() -> new EventoException("Nenhuma inscrição para cancelar."));
+
+        lote.liberarVaga();
+
+        if (evento.temVaga() && lote.temVaga()) {
+            Pessoa proximo = evento.proximoDaListaEspera();
+            if (proximo != null) {
+                lote.ocuparVaga();
+            }
+        }
+        eventoRepositorio.save(evento);
     }
 }

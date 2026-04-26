@@ -1,11 +1,8 @@
 package com.gestaoeventos.dominio.inscricao.listaespera;
 
-import com.gestaoeventos.dominio.compartilhado.StatusInscricao;
 import com.gestaoeventos.dominio.compartilhado.StatusListaEspera;
 import com.gestaoeventos.dominio.evento.evento.Evento;
 import com.gestaoeventos.dominio.evento.evento.EventoRepositorio;
-import com.gestaoeventos.dominio.evento.lote.Lote;
-import com.gestaoeventos.dominio.inscricao.inscricao.InscricaoRepositorio;
 import com.gestaoeventos.dominio.participante.pessoa.Pessoa;
 import com.gestaoeventos.dominio.participante.pessoa.PessoaRepositorio;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,53 +26,27 @@ public class ListaEsperaServico {
     @Autowired
     private PessoaRepositorio pessoaRepositorio;
 
-    @Autowired
-    private InscricaoRepositorio inscricaoRepositorio;
-
     @Transactional
     public ListaEspera entrarNaFila(String cpf, Long eventoId) {
+        if (listaEsperaRepositorio.existsByParticipanteCpfAndEventoId(cpf, eventoId)) {
+            throw new ListaEsperaException("Usuário já está na lista de espera.");
+        }
+
         Evento evento = eventoRepositorio.findById(eventoId)
                 .orElseThrow(() -> new ListaEsperaException("Evento não encontrado."));
 
-        long inscritos = inscricaoRepositorio.countByEventoIdAndStatusNot(eventoId, StatusInscricao.CANCELADA);
-        if (inscritos < evento.getCapacidade()) {
-            throw new ListaEsperaException("O evento ainda possui vagas. Faça sua inscrição normalmente.");
-        }
-
-        if (listaEsperaRepositorio.existsByParticipanteCpfAndEventoId(cpf, eventoId)) {
-            throw new ListaEsperaException("Você já está na lista de espera deste evento.");
-        }
-
-        Pessoa participante = pessoaRepositorio.findById(cpf)
+        Pessoa pessoa = pessoaRepositorio.findById(cpf)
                 .orElseThrow(() -> new ListaEsperaException("Participante não encontrado."));
 
         long totalNaFila = listaEsperaRepositorio.countByEventoIdAndStatus(eventoId, StatusListaEspera.AGUARDANDO);
 
         ListaEspera entrada = new ListaEspera();
-        entrada.setParticipante(participante);
+        entrada.setParticipante(pessoa);
         entrada.setEvento(evento);
-        entrada.setStatus(StatusListaEspera.AGUARDANDO);
         entrada.setPosicao((int) totalNaFila + 1);
+        entrada.setStatus(StatusListaEspera.AGUARDANDO);
 
         return listaEsperaRepositorio.save(entrada);
-    }
-
-    @Transactional
-    public void processarVagaLiberada(Long eventoId) {
-        List<ListaEspera> fila = listaEsperaRepositorio
-                .findByEventoIdAndStatusOrderByPosicaoAsc(eventoId, StatusListaEspera.AGUARDANDO);
-
-        if (fila.isEmpty()) {
-            return;
-        }
-
-        ListaEspera primeiroNaFila = fila.get(0);
-        primeiroNaFila.setStatus(StatusListaEspera.CARRINHO);
-        primeiroNaFila.setDataExpiracaoCarrinho(LocalDateTime.now().plusHours(HORAS_LIMITE_PAGAMENTO));
-
-        listaEsperaRepositorio.save(primeiroNaFila);
-
-        enviarNotificacao(primeiroNaFila);
     }
 
     @Transactional
@@ -84,44 +55,42 @@ public class ListaEsperaServico {
                 .orElseThrow(() -> new ListaEsperaException("Entrada na lista de espera não encontrada."));
 
         if (entrada.getStatus() != StatusListaEspera.CARRINHO) {
-            throw new ListaEsperaException("O ingresso não está disponível no carrinho.");
+            throw new ListaEsperaException("O item não está disponível para pagamento no carrinho.");
         }
 
-        if (LocalDateTime.now().isAfter(entrada.getDataExpiracaoCarrinho())) {
-            expirarERepassar(entrada);
-            throw new ListaEsperaException("O tempo limite para pagamento expirou. O ingresso foi repassado para o próximo da fila.");
+        // REGRA DE NEGÓCIO: Verificação de TTL (2 horas)
+        if (entrada.getDataExpiracaoCarrinho().isBefore(LocalDateTime.now())) {
+            processarExpiracaoERepasse(entrada);
+            throw new ListaEsperaException("Prazo de pagamento expirado. A vaga foi repassada para o próximo da fila.");
         }
-
-        Pessoa participante = entrada.getParticipante();
-        Lote lote = entrada.getEvento().getLotes().stream()
-                .findFirst()
-                .orElseThrow(() -> new ListaEsperaException("Lote não encontrado para o evento."));
-
-        double valorLote = lote.getPreco() != null ? lote.getPreco().doubleValue() : 0.0;
-
-        if (participante.getSaldo() < valorLote) {
-            throw new ListaEsperaException("Saldo insuficiente para concluir a compra.");
-        }
-
-        participante.setSaldo(participante.getSaldo() - valorLote);
-        pessoaRepositorio.save(participante);
 
         entrada.setStatus(StatusListaEspera.CONFIRMADO);
         return listaEsperaRepositorio.save(entrada);
     }
 
+    // =========================================================================
+    // NOVO MÉTODO: Processa qualquer vaga liberada (por cancelamento ou TTL)
+    // =========================================================================
     @Transactional
-    public void expirarERepassar(ListaEspera entrada) {
-        entrada.setStatus(StatusListaEspera.EXPIRADO);
-        listaEsperaRepositorio.save(entrada);
+    public void processarVagaLiberada(Long eventoId) {
+        // Busca o próximo da fila (FIFO)
+        List<ListaEspera> fila = listaEsperaRepositorio
+                .findByEventoIdAndStatusOrderByPosicaoAsc(eventoId, StatusListaEspera.AGUARDANDO);
 
-        processarVagaLiberada(entrada.getEvento().getId());
+        if (!fila.isEmpty()) {
+            ListaEspera proximo = fila.get(0);
+            proximo.setStatus(StatusListaEspera.CARRINHO);
+            proximo.setDataExpiracaoCarrinho(LocalDateTime.now().plusHours(HORAS_LIMITE_PAGAMENTO));
+            listaEsperaRepositorio.save(proximo);
+        }
     }
 
-    private void enviarNotificacao(ListaEspera entrada) {
-        System.out.println("NOTIFICAÇÃO: Olá " + entrada.getParticipante().getNome()
-                + "! Um ingresso para o evento '" + entrada.getEvento().getNome()
-                + "' foi adicionado ao seu carrinho. Você tem "
-                + HORAS_LIMITE_PAGAMENTO + " horas para concluir o pagamento.");
+    private void processarExpiracaoERepasse(ListaEspera entradaExpirada) {
+        // 1. Marca quem perdeu o prazo como expirado
+        entradaExpirada.setStatus(StatusListaEspera.EXPIRADO);
+        listaEsperaRepositorio.save(entradaExpirada);
+
+        // 2. Chama o método que acabamos de criar para repassar a vaga
+        processarVagaLiberada(entradaExpirada.getEvento().getId());
     }
 }

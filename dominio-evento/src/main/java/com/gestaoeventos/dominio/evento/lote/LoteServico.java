@@ -4,7 +4,6 @@ import com.gestaoeventos.dominio.evento.evento.Evento;
 import com.gestaoeventos.dominio.evento.evento.EventoRepositorio;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
 import java.time.LocalDateTime;
 
 @Service
@@ -17,7 +16,7 @@ public class LoteServico {
         Evento evento = eventoRepositorio.findById(eventoId)
                 .orElseThrow(() -> new LoteException("Evento não encontrado."));
 
-        LocalDateTime agora = LocalDateTime.now();
+        LocalDateTime agora =   LocalDateTime.now();
 
         return evento.getLotes().stream()
                 .filter(lote -> lote.getQuantidadeDisponivel() > 0)

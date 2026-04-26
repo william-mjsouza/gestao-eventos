@@ -4,15 +4,10 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
 @Entity
 @Table(name = "LOTE")
 public class Lote {
@@ -44,6 +39,57 @@ public class Lote {
     @Column(nullable = false)
     @NotNull(message = "A data de fim das vendas é obrigatória")
     private LocalDateTime dataFimVenda;
+
+    public Lote() {}
+
+    public Lote(Long id, String nome, BigDecimal preco, int quantidadeTotal, int quantidadeDisponivel,
+                LocalDateTime dataInicioVenda, LocalDateTime dataFimVenda) {
+        this.id = id;
+        this.nome = nome;
+        this.preco = preco;
+        this.quantidadeTotal = quantidadeTotal;
+        this.quantidadeDisponivel = quantidadeDisponivel;
+        this.dataInicioVenda = dataInicioVenda;
+        this.dataFimVenda = dataFimVenda;
+    }
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public String getNome() { return nome; }
+    public void setNome(String nome) { this.nome = nome; }
+
+    public BigDecimal getPreco() { return preco; }
+    public void setPreco(BigDecimal preco) { this.preco = preco; }
+
+    public int getQuantidadeTotal() { return quantidadeTotal; }
+    public void setQuantidadeTotal(int quantidadeTotal) { this.quantidadeTotal = quantidadeTotal; }
+
+    public int getQuantidadeDisponivel() { return quantidadeDisponivel; }
+    public void setQuantidadeDisponivel(int quantidadeDisponivel) { this.quantidadeDisponivel = quantidadeDisponivel; }
+
+    public LocalDateTime getDataInicioVenda() { return dataInicioVenda; }
+    public void setDataInicioVenda(LocalDateTime dataInicioVenda) { this.dataInicioVenda = dataInicioVenda; }
+
+    public LocalDateTime getDataFimVenda() { return dataFimVenda; }
+    public void setDataFimVenda(LocalDateTime dataFimVenda) { this.dataFimVenda = dataFimVenda; }
+
+    public boolean temVaga() {
+        return quantidadeDisponivel > 0;
+    }
+
+    public void ocuparVaga() {
+        if (!temVaga()) {
+            throw new RuntimeException("Lote esgotado");
+        }
+        quantidadeDisponivel--;
+    }
+
+    public void liberarVaga() {
+        if (quantidadeDisponivel < quantidadeTotal) {
+            quantidadeDisponivel++;
+        }
+    }
 
     public void reservarVaga() {
         if (this.quantidadeDisponivel <= 0) {
