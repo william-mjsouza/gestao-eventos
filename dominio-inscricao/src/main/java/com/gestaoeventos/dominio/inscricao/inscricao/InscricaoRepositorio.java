@@ -20,7 +20,7 @@ public interface InscricaoRepositorio extends JpaRepository<Inscricao, Long> {
             "WHERE i.participante.cpf = :cpf " +
             "AND i.status = com.gestaoeventos.dominio.compartilhado.StatusInscricao.CONFIRMADA " +
             "AND i.evento.dataHoraInicio < :fim " +
-            "AND i.evento.dataHoraFim > :inicio")
+            "AND i.evento.dataHoraTermino > :inicio")
     List<Inscricao> buscarConflitos(
             @Param("cpf") String cpf,
             @Param("inicio") LocalDateTime inicio,
@@ -28,4 +28,5 @@ public interface InscricaoRepositorio extends JpaRepository<Inscricao, Long> {
 
     long countByParticipanteCpfAndEventoIdAndStatusIn(String cpf, Long eventoId, java.util.List<StatusInscricao> statuses);
     List<Inscricao> findByEventoIdAndStatusIn(Long eventoId, List<StatusInscricao> statuses);
+    boolean existsByParticipanteCpfAndEventoIdAndCupomCodigo(String cpf, Long eventoId, String cupomCodigo);
 }

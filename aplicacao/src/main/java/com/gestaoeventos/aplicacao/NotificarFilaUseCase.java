@@ -1,7 +1,9 @@
 package com.gestaoeventos.aplicacao;
 
 import com.gestaoeventos.dominio.inscricao.inscricao.evento.VagaLiberadaFilaEvent;
+import org.springframework.stereotype.Component;
 
+@Component
 public class NotificarFilaUseCase {
 
     public void executar(VagaLiberadaFilaEvent evento) {

@@ -7,16 +7,11 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
 @Entity
 @Table(name = "EVENTO")
 public class Evento {
@@ -39,7 +34,6 @@ public class Evento {
 
     @Column(nullable = false)
     @NotNull(message = "A data e horário de término são obrigatórios")
-    private LocalDateTime dataHoraFim;
     private LocalDateTime dataHoraTermino;
 
     @Column(nullable = false)
@@ -70,6 +64,51 @@ public class Evento {
     @Transient
     private List<Pessoa> listaEspera = new ArrayList<>();
 
+    @Column(nullable = false)
+    @Min(value = 0, message = "A idade mínima não pode ser negativa")
+    private Integer idadeMinima = 0;
+
+    public Evento() {}
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public String getNome() { return nome; }
+    public void setNome(String nome) { this.nome = nome; }
+
+    public String getDescricao() { return descricao; }
+    public void setDescricao(String descricao) { this.descricao = descricao; }
+
+    public LocalDateTime getDataHoraInicio() { return dataHoraInicio; }
+    public void setDataHoraInicio(LocalDateTime dataHoraInicio) { this.dataHoraInicio = dataHoraInicio; }
+
+    public LocalDateTime getDataHoraTermino() { return dataHoraTermino; }
+    public void setDataHoraTermino(LocalDateTime dataHoraTermino) { this.dataHoraTermino = dataHoraTermino; }
+
+    public String getLocal() { return local; }
+    public void setLocal(String local) { this.local = local; }
+
+    public int getCapacidade() { return capacidade; }
+    public void setCapacidade(int capacidade) { this.capacidade = capacidade; }
+
+    public int getLimiteIngressosPorCpf() { return limiteIngressosPorCpf; }
+    public void setLimiteIngressosPorCpf(int limiteIngressosPorCpf) { this.limiteIngressosPorCpf = limiteIngressosPorCpf; }
+
+    public Pessoa getOrganizador() { return organizador; }
+    public void setOrganizador(Pessoa organizador) { this.organizador = organizador; }
+
+    public List<Lote> getLotes() { return lotes; }
+    public void setLotes(List<Lote> lotes) { this.lotes = lotes; }
+
+    public StatusEvento getStatus() { return status; }
+    public void setStatus(StatusEvento status) { this.status = status; }
+
+    public List<Pessoa> getListaEspera() { return listaEspera; }
+    public void setListaEspera(List<Pessoa> listaEspera) { this.listaEspera = listaEspera; }
+
+    public Integer getIdadeMinima() { return idadeMinima; }
+    public void setIdadeMinima(Integer idadeMinima) { this.idadeMinima = idadeMinima; }
+
     public int getTotalVagasDisponiveis() {
         return lotes.stream()
                 .mapToInt(Lote::getQuantidadeDisponivel)
@@ -81,6 +120,7 @@ public class Evento {
                 .mapToInt(lote -> lote.getQuantidadeTotal() - lote.getQuantidadeDisponivel())
                 .sum();
     }
+
     public boolean temVaga() {
         return getTotalVagasOcupadas() < capacidade;
     }
@@ -89,7 +129,6 @@ public class Evento {
         int totalLotes = lotes.stream()
                 .mapToInt(Lote::getQuantidadeTotal)
                 .sum();
-
         return totalLotes <= capacidade;
     }
 
@@ -99,20 +138,17 @@ public class Evento {
 
     public Pessoa proximoDaListaEspera() {
         if (listaEspera.isEmpty()) return null;
-        return listaEspera.remove(0); // FIFO
+        return listaEspera.remove(0);
     }
 
     public boolean temConflitoHorario(LocalDateTime outroInicio, LocalDateTime outroFim) {
-        if (this.dataHoraInicio == null || this.dataHoraFim == null || outroInicio == null || outroFim == null) {
+        if (this.dataHoraInicio == null || this.dataHoraTermino == null || outroInicio == null || outroFim == null) {
             return false;
         }
-        return this.dataHoraInicio.isBefore(outroFim) && this.dataHoraFim.isAfter(outroInicio);
+        return this.dataHoraInicio.isBefore(outroFim) && this.dataHoraTermino.isAfter(outroInicio);
     }
 
     public boolean periodoValido() {
-        return dataHoraFim != null && dataHoraInicio != null && dataHoraFim.isAfter(dataHoraInicio);
+        return dataHoraTermino != null && dataHoraInicio != null && dataHoraTermino.isAfter(dataHoraInicio);
     }
-    @Column(nullable = false)
-    @Min(value = 0, message = "A idade mínima não pode ser negativa")
-    private Integer idadeMinima = 0;
 }

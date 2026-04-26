@@ -74,7 +74,7 @@ public class controleHorarioSteps {
         eventoExistente.setOrganizador(org);
         eventoExistente.setStatus(StatusEvento.ATIVO);
         eventoExistente.setDataHoraInicio(LocalDateTime.parse(data + "T" + inicio + ":00"));
-        eventoExistente.setDataHoraFim(LocalDateTime.parse(data + "T" + fim + ":00"));
+        eventoExistente.setDataHoraTermino(LocalDateTime.parse(data + "T" + fim + ":00"));
         eventoExistente.setCapacidade(100);
         eventoExistente.setLotes(new ArrayList<>());
 
@@ -128,7 +128,7 @@ public class controleHorarioSteps {
             novoEvento.setOrganizador(org);
             novoEvento.setStatus(StatusEvento.ATIVO);
             novoEvento.setDataHoraInicio(LocalDateTime.parse(dataCenario + "T" + inicio + ":00"));
-            novoEvento.setDataHoraFim(LocalDateTime.parse(dataCenario + "T" + fim + ":00"));
+            novoEvento.setDataHoraTermino(LocalDateTime.parse(dataCenario + "T" + fim + ":00"));
             novoEvento.setCapacidade(100);
 
             Lote novoLote = new Lote();

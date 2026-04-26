@@ -22,7 +22,7 @@ public class InscricaoServico {
         var conflitos = inscricaoRepositorio.buscarConflitos(
                 pessoa.getCpf(),
                 novoEvento.getDataHoraInicio(),
-                novoEvento.getDataHoraFim()
+                novoEvento.getDataHoraTermino()
         );
 
         if (!conflitos.isEmpty()) {
@@ -127,6 +127,7 @@ public class InscricaoServico {
         } catch (Exception e) {
             participante.setSaldo(saldoAntesDoDebito);
             lote.setQuantidadeDisponivel(vagasAntesDoDebito);
+            inscricao.setStatus(StatusInscricao.PENDENTE);
             throw new InscricaoException("Falha ao gerar ingresso. Operação revertida.");
         }
     }
