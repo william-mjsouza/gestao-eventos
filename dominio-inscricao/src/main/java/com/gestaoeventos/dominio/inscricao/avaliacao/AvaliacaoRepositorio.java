@@ -8,4 +8,6 @@ import java.util.List;
 @Repository
 public interface AvaliacaoRepositorio extends JpaRepository<Avaliacao, Long> {
     List<Avaliacao> findByEventoId(Long eventoId);
+
+    boolean existsByPessoaCpfAndEventoId(String pessoaCpf, Long eventoId);
 }
