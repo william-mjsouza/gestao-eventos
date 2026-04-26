@@ -17,5 +17,4 @@ public interface InscricaoRepositorio {
     long countByParticipanteCpfAndEventoIdAndStatusIn(String cpf, Long eventoId, List<StatusInscricao> statuses);
     List<Inscricao> findByEventoIdAndStatusIn(Long eventoId, List<StatusInscricao> statuses);
     boolean existsByParticipanteCpfAndEventoIdAndCupomCodigo(String cpf, Long eventoId, String cupomCodigo);
-    boolean existsByParticipanteCpfAndEventoIdAndStatus(String cpf, Long eventoId, StatusInscricao status);
 }
