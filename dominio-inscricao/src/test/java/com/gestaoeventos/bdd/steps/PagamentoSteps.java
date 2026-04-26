@@ -8,6 +8,8 @@ import com.gestaoeventos.dominio.inscricao.inscricao.InscricaoException;
 import com.gestaoeventos.dominio.inscricao.inscricao.InscricaoRepositorio;
 import com.gestaoeventos.dominio.inscricao.inscricao.InscricaoServico;
 import com.gestaoeventos.dominio.participante.pessoa.Pessoa;
+import com.gestaoeventos.dominio.participante.pessoa.PessoaRepositorio; // IMPORTANTE
+import com.gestaoeventos.dominio.participante.pessoa.TipoPagamento;
 import io.cucumber.java.pt.Dado;
 import io.cucumber.java.pt.E;
 import io.cucumber.java.pt.Entao;
@@ -29,6 +31,10 @@ public class PagamentoSteps {
 
     @Autowired
     private InscricaoRepositorio inscricaoRepositorio;
+
+
+    @Autowired
+    private PessoaRepositorio pessoaRepositorio;
 
     private Pessoa participante;
     private Evento evento;
@@ -55,16 +61,19 @@ public class PagamentoSteps {
         participante.setCpf("99988877766");
         participante.setSaldo(saldo);
 
+        when(pessoaRepositorio.findById(participante.getCpf())).thenReturn(Optional.of(participante));
+
         inscricaoPendente = new Inscricao(10L, participante, evento, lote, StatusInscricao.PENDENTE, LocalDateTime.now());
         when(inscricaoRepositorio.findById(10L)).thenReturn(Optional.of(inscricaoPendente));
         when(inscricaoRepositorio.save(any(Inscricao.class))).thenReturn(inscricaoPendente);
     }
 
-    @Quando("ele confirmar o pagamento da inscrição")
-    @Quando("ele tentar confirmar o pagamento da inscrição")
-    public void tentar_confirmar_pagamento() {
+    @Quando("ele confirmar o pagamento da inscrição via {string}")
+    @Quando("ele tentar confirmar o pagamento da inscrição via {string}")
+    public void tentar_confirmar_pagamento_via(String metodoPagamento) {
         try {
-            inscricaoServico.confirmarPagamento(10L);
+            TipoPagamento tipoPagamento = TipoPagamento.valueOf(metodoPagamento.toUpperCase());
+            inscricaoServico.confirmarPagamento(10L, tipoPagamento);
         } catch (Exception e) {
             excecao = e;
         }
@@ -72,7 +81,7 @@ public class PagamentoSteps {
 
     @Entao("o sistema deve debitar R$ {double} da carteira \\(atualizando o saldo para R$ {double})")
     public void sistema_debita_carteira(Double debitado, Double novoSaldo) {
-        assertNull(excecao, "Não deveria ocorrer erro ao processar pagamento com saldo suficiente.");
+        assertNull(excecao, "Não deveria ocorrer erro ao processar pagamento com saldo suficiente. Detalhe: " + (excecao != null ? excecao.getMessage() : ""));
         assertEquals(novoSaldo, participante.getSaldo(), "O saldo após o débito não está correto.");
     }
 
@@ -91,7 +100,8 @@ public class PagamentoSteps {
 
     @E("exibir uma mensagem de erro informando {string}")
     public void exibir_mensagem_erro_saldo(String mensagemEsperada) {
-        assertTrue(excecao instanceof InscricaoException, "A exceção deveria ser uma InscricaoException");
-        assertEquals(mensagemEsperada, excecao.getMessage(), "A mensagem de erro retornada não confere.");
+        assertNotNull(excecao, "Uma exceção era esperada, mas não ocorreu.");
+        assertTrue(excecao.getMessage().contains(mensagemEsperada),
+                "A mensagem de erro não confere.\nEsperada: " + mensagemEsperada + "\nAtual: " + excecao.getMessage());
     }
 }

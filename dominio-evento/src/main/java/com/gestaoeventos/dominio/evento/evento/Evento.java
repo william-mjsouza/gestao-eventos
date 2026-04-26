@@ -40,6 +40,7 @@ public class Evento {
     @Column(nullable = false)
     @NotNull(message = "A data e horário de término são obrigatórios")
     private LocalDateTime dataHoraFim;
+    private LocalDateTime dataHoraTermino;
 
     @Column(nullable = false)
     @NotBlank(message = "O local é obrigatório")
@@ -48,6 +49,10 @@ public class Evento {
     @Column(nullable = false)
     @Min(value = 1, message = "A capacidade deve ser maior que zero")
     private int capacidade;
+
+    @Column(nullable = false)
+    @Min(value = 1, message = "O limite de ingressos por CPF deve ser maior que zero")
+    private int limiteIngressosPorCpf = 1;
 
     @ManyToOne
     @JoinColumn(name = "organizador_cpf", nullable = false)
@@ -107,4 +112,7 @@ public class Evento {
     public boolean periodoValido() {
         return dataHoraFim != null && dataHoraInicio != null && dataHoraFim.isAfter(dataHoraInicio);
     }
+    @Column(nullable = false)
+    @Min(value = 0, message = "A idade mínima não pode ser negativa")
+    private Integer idadeMinima = 0;
 }

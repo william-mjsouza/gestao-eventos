@@ -8,6 +8,7 @@ import io.cucumber.java.pt.Dado;
 import io.cucumber.java.pt.Entao;
 import io.cucumber.java.pt.Quando;
 import org.springframework.beans.factory.annotation.Autowired;
+import java.time.LocalDate;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -34,6 +35,8 @@ public class PessoaSteps {
         pessoa.setCpf("52718364020");
         pessoa.setOrganizador(false);
         pessoa.setSaldo(0.0);
+        pessoa.setDataNascimento(LocalDate.of(2000, 1, 1));
+
 
         when(pessoaRepositorio.existsById(anyString())).thenReturn(false);
         when(pessoaRepositorio.existsByEmail(anyString())).thenReturn(false);
@@ -83,6 +86,7 @@ public class PessoaSteps {
         pessoa.setSenha("123");
         pessoa.setOrganizador(false);
         pessoa.setSaldo(0.0);
+        pessoa.setDataNascimento(LocalDate.of(2000, 1, 1));
     }
 
     @Quando("um novo usuário tenta se cadastrar utilizando o mesmo email")

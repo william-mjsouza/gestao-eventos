@@ -60,5 +60,10 @@ public class Lote {
         if (quantidadeDisponivel < quantidadeTotal) {
             quantidadeDisponivel++;
         }
+    public void reservarVaga() {
+        if (this.quantidadeDisponivel <= 0) {
+            throw new RuntimeException("Não há vagas disponíveis neste lote");
+        }
+        this.quantidadeDisponivel--;
     }
 }

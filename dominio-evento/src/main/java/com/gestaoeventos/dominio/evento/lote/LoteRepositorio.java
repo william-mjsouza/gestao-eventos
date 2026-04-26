@@ -1,8 +1,10 @@
 package com.gestaoeventos.dominio.evento.lote;
 
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
+import java.util.Optional;
 
-@Repository
-public interface LoteRepositorio extends JpaRepository<Lote, Long> {
+public interface LoteRepositorio {
+
+    Optional<Lote> buscarPorIdComBloqueio(Long id);
+
+    Lote salvar(Lote lote);
 }

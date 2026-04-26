@@ -8,6 +8,7 @@ import com.gestaoeventos.dominio.participante.pessoa.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.time.temporal.ChronoUnit;
 
 @Service
 public class InscricaoServico {
@@ -29,12 +30,12 @@ public class InscricaoServico {
         }
     }
 
+
+    @Autowired
+    private PessoaServico pessoaServico;
+
     @Transactional
     public Inscricao iniciarInscricao(String cpf, Long eventoId, Long loteId) {
-        if (inscricaoRepositorio.existsByParticipanteCpfAndEventoId(cpf, eventoId)) {
-            throw new InscricaoException("Usuário já possui participação neste evento.");
-        }
-
         Evento evento = eventoRepositorio.findById(eventoId)
                 .orElseThrow(() -> new InscricaoException("Evento não encontrado."));
 
@@ -42,6 +43,12 @@ public class InscricaoServico {
                 .orElseThrow(() -> new InscricaoException("Participante não encontrado."));
 
         validarConflito(participante, evento);
+        long ingressosDoUsuario = inscricaoRepositorio.countByParticipanteCpfAndEventoIdAndStatusIn(
+                cpf, eventoId, java.util.Arrays.asList(StatusInscricao.PENDENTE, StatusInscricao.CONFIRMADA));
+
+        if (ingressosDoUsuario >= evento.getLimiteIngressosPorCpf()) {
+            throw new InscricaoException("Limite de ingressos por usuário atingido para este evento.");
+        }
 
         if (evento.getStatus() == StatusEvento.CANCELADO) {
             throw new InscricaoException("Não é possível se inscrever em um evento cancelado.");
@@ -50,6 +57,21 @@ public class InscricaoServico {
         long inscritos = inscricaoRepositorio.countByEventoIdAndStatusNot(eventoId, StatusInscricao.CANCELADA);
         if (inscritos >= evento.getCapacidade()) {
             throw new InscricaoException("O evento não possui mais vagas.");
+        }
+
+        Pessoa participante = pessoaRepositorio.findById(cpf)
+                .orElseThrow(() -> new InscricaoException("Participante não encontrado."));
+
+        if (evento.getIdadeMinima() != null && evento.getIdadeMinima() > 0) {
+            long idadeNaDataDoEvento = ChronoUnit.YEARS.between(
+                    participante.getDataNascimento(),
+                    evento.getDataHoraInicio().toLocalDate()
+            );
+            if (idadeNaDataDoEvento < evento.getIdadeMinima()) {
+                throw new InscricaoException("Idade insuficiente. O participante terá " + idadeNaDataDoEvento +
+                        " anos na data do evento, o que é inferior à idade mínima de " +
+                        evento.getIdadeMinima() + " anos.");
+            }
         }
 
         Lote lote = evento.getLotes().stream()
@@ -67,7 +89,8 @@ public class InscricaoServico {
     }
 
     @Transactional
-    public Inscricao confirmarPagamento(Long inscricaoId) {
+
+    public Inscricao confirmarPagamento(Long inscricaoId, TipoPagamento tipoPagamento) {
         Inscricao inscricao = inscricaoRepositorio.findById(inscricaoId)
                 .orElseThrow(() -> new InscricaoException("Inscrição não encontrada."));
 
@@ -77,17 +100,15 @@ public class InscricaoServico {
 
         Pessoa participante = inscricao.getParticipante();
         Lote lote = inscricao.getLote();
-        double valorLote = lote.getPreco().doubleValue();
+        double valorBase = lote.getPreco().doubleValue();
 
-        if (participante.getSaldo() < valorLote) {
-            throw new InscricaoException("Saldo insuficiente para concluir a compra");
-        }
-
-        participante.setSaldo(participante.getSaldo() - valorLote);
+        pessoaServico.debitarSaldo(participante.getCpf(), valorBase, tipoPagamento);
+        
         lote.setQuantidadeDisponivel(lote.getQuantidadeDisponivel() - 1);
         inscricao.setStatus(StatusInscricao.CONFIRMADA);
 
         pessoaRepositorio.save(participante);
+        eventoRepositorio.save(inscricao.getEvento());
         return inscricaoRepositorio.save(inscricao);
     }
 }

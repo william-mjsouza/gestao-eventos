@@ -8,6 +8,8 @@ import org.springframework.stereotype.Repository;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import java.util.List;
+
 @Repository
 public interface InscricaoRepositorio extends JpaRepository<Inscricao, Long> {
     boolean existsByParticipanteCpfAndEventoId(String cpf, Long eventoId);
@@ -23,4 +25,7 @@ public interface InscricaoRepositorio extends JpaRepository<Inscricao, Long> {
             @Param("cpf") String cpf,
             @Param("inicio") LocalDateTime inicio,
             @Param("fim") LocalDateTime fim);
+
+    long countByParticipanteCpfAndEventoIdAndStatusIn(String cpf, Long eventoId, java.util.List<StatusInscricao> statuses);
+    List<Inscricao> findByEventoIdAndStatusIn(Long eventoId, List<StatusInscricao> statuses);
 }

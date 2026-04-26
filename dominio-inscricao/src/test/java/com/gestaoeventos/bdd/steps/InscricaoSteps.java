@@ -11,6 +11,7 @@ import com.gestaoeventos.dominio.inscricao.inscricao.InscricaoRepositorio;
 import com.gestaoeventos.dominio.inscricao.inscricao.InscricaoServico;
 import com.gestaoeventos.dominio.participante.pessoa.Pessoa;
 import com.gestaoeventos.dominio.participante.pessoa.PessoaRepositorio;
+import com.gestaoeventos.dominio.participante.pessoa.TipoPagamento;
 import io.cucumber.java.pt.Dado;
 import io.cucumber.java.pt.E;
 import io.cucumber.java.pt.Entao;
@@ -76,7 +77,7 @@ public class InscricaoSteps {
         when(inscricaoRepositorio.findById(1L)).thenReturn(Optional.of(inscricaoSimulada));
 
         Inscricao pendente = inscricaoServico.iniciarInscricao(participante.getCpf(), evento.getId(), lote.getId());
-        inscricaoGerada = inscricaoServico.confirmarPagamento(pendente.getId());
+        inscricaoGerada = inscricaoServico.confirmarPagamento(pendente.getId(), TipoPagamento.PIX);
     }
 
     @Entao("o sistema deve inscrever o participante")
@@ -89,7 +90,11 @@ public class InscricaoSteps {
     public void usuario_ja_inscrito() {
         evento_ativo();
         possui_vagas();
-        when(inscricaoRepositorio.existsByParticipanteCpfAndEventoId(participante.getCpf(), evento.getId())).thenReturn(true);
+        when(inscricaoRepositorio.countByParticipanteCpfAndEventoIdAndStatusIn(
+                eq(participante.getCpf()), 
+                eq(evento.getId()), 
+                anyList()
+        )).thenReturn(1L); // Simula que ele já tem 1 ingresso e o limite padrao do evento também é 1
     }
 
     @Quando("ele tenta iniciar uma nova inscrição para o mesmo evento")
@@ -105,7 +110,7 @@ public class InscricaoSteps {
     public void sistema_alerta_participacao() {
         assertNotNull(excecao, "Uma exceção deveria ser lançada.");
         assertTrue(excecao instanceof InscricaoException);
-        assertEquals("Usuário já possui participação neste evento.", excecao.getMessage());
+        assertTrue(excecao.getMessage().contains("Limite de ingressos por usuário atingido"), "A mensagem deve relatar sobre limite excedido");
     }
 
     @Dado("que um participante possui uma inscrição confirmada")
@@ -114,6 +119,8 @@ public class InscricaoSteps {
         participante.setCpf("98765432100");
         saldoInicial = 500.0;
         participante.setSaldo(saldoInicial);
+
+        when(pessoaRepositorio.findById(participante.getCpf())).thenReturn(Optional.of(participante));
 
         evento = new Evento();
         evento.setId(1L);
@@ -153,7 +160,7 @@ public class InscricaoSteps {
 
     @Entao("a inscrição deve ser cancelada com sucesso")
     public void inscricao_cancelada_com_sucesso() {
-        assertNull(excecao, "Não deveria ter ocorrido erro no cancelamento.");
+        assertNull(excecao, "Não deveria ter ocorrido erro no cancelamento. Detalhe: " + (excecao != null ? excecao.getMessage() : ""));
         assertEquals(StatusInscricao.CANCELADA, inscricaoCancelamento.getStatus());
         verify(inscricaoRepositorio, times(1)).save(inscricaoCancelamento);
     }
@@ -182,7 +189,7 @@ public class InscricaoSteps {
     public void exibir_mensagem_prazo_excedido() {
         assertTrue(excecao instanceof InscricaoException, "Deveria ser uma InscricaoException");
         String mensagemErro = excecao.getMessage().toLowerCase();
-        assertTrue(mensagemErro.contains("fora do prazo"),
+        assertTrue(mensagemErro.contains("48 horas"),
                 "A mensagem de erro não informou o motivo do bloqueio. Mensagem atual: " + excecao.getMessage());
     }
 }
