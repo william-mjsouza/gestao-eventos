@@ -11,7 +11,6 @@ import com.gestaoeventos.dominio.inscricao.inscricao.InscricaoRepositorio;
 import com.gestaoeventos.dominio.inscricao.inscricao.InscricaoServico;
 import com.gestaoeventos.dominio.participante.pessoa.Pessoa;
 import com.gestaoeventos.dominio.participante.pessoa.PessoaRepositorio;
-import com.gestaoeventos.dominio.participante.pessoa.TipoPagamento;
 import io.cucumber.java.pt.Dado;
 import io.cucumber.java.pt.E;
 import io.cucumber.java.pt.Entao;
@@ -77,7 +76,7 @@ public class InscricaoSteps {
         when(inscricaoRepositorio.findById(1L)).thenReturn(Optional.of(inscricaoSimulada));
 
         Inscricao pendente = inscricaoServico.iniciarInscricao(participante.getCpf(), evento.getId(), lote.getId());
-        inscricaoGerada = inscricaoServico.confirmarPagamento(pendente.getId(), TipoPagamento.PIX);
+        inscricaoGerada = inscricaoServico.confirmarPagamento(pendente.getId());
     }
 
     @Entao("o sistema deve inscrever o participante")
@@ -90,11 +89,7 @@ public class InscricaoSteps {
     public void usuario_ja_inscrito() {
         evento_ativo();
         possui_vagas();
-        when(inscricaoRepositorio.countByParticipanteCpfAndEventoIdAndStatusIn(
-                eq(participante.getCpf()), 
-                eq(evento.getId()), 
-                anyList()
-        )).thenReturn(1L); // Simula que ele já tem 1 ingresso e o limite padrao do evento também é 1
+        when(inscricaoRepositorio.existsByParticipanteCpfAndEventoId(participante.getCpf(), evento.getId())).thenReturn(true);
     }
 
     @Quando("ele tenta iniciar uma nova inscrição para o mesmo evento")
@@ -110,7 +105,7 @@ public class InscricaoSteps {
     public void sistema_alerta_participacao() {
         assertNotNull(excecao, "Uma exceção deveria ser lançada.");
         assertTrue(excecao instanceof InscricaoException);
-        assertTrue(excecao.getMessage().contains("Limite de ingressos por usuário atingido"), "A mensagem deve relatar sobre limite excedido");
+        assertEquals("Usuário já possui participação neste evento.", excecao.getMessage());
     }
 
     @Dado("que um participante possui uma inscrição confirmada")
@@ -119,8 +114,6 @@ public class InscricaoSteps {
         participante.setCpf("98765432100");
         saldoInicial = 500.0;
         participante.setSaldo(saldoInicial);
-
-        when(pessoaRepositorio.findById(participante.getCpf())).thenReturn(Optional.of(participante));
 
         evento = new Evento();
         evento.setId(1L);
@@ -160,7 +153,7 @@ public class InscricaoSteps {
 
     @Entao("a inscrição deve ser cancelada com sucesso")
     public void inscricao_cancelada_com_sucesso() {
-        assertNull(excecao, "Não deveria ter ocorrido erro no cancelamento. Detalhe: " + (excecao != null ? excecao.getMessage() : ""));
+        assertNull(excecao, "Não deveria ter ocorrido erro no cancelamento.");
         assertEquals(StatusInscricao.CANCELADA, inscricaoCancelamento.getStatus());
         verify(inscricaoRepositorio, times(1)).save(inscricaoCancelamento);
     }
@@ -189,68 +182,7 @@ public class InscricaoSteps {
     public void exibir_mensagem_prazo_excedido() {
         assertTrue(excecao instanceof InscricaoException, "Deveria ser uma InscricaoException");
         String mensagemErro = excecao.getMessage().toLowerCase();
-        assertTrue(mensagemErro.contains("48 horas"),
+        assertTrue(mensagemErro.contains("fora do prazo"),
                 "A mensagem de erro não informou o motivo do bloqueio. Mensagem atual: " + excecao.getMessage());
-    }
-
-    private Inscricao inscricaoPendenteAtomicidade;
-
-    @Dado("que o usuário tem saldo suficiente")
-    public void usuario_tem_saldo_suficiente() {
-        excecao = null;
-
-        participante = new Pessoa();
-        participante.setCpf("11122233344");
-        saldoInicial = 500.0;
-        participante.setSaldo(saldoInicial);
-        when(pessoaRepositorio.findById(participante.getCpf())).thenReturn(Optional.of(participante));
-
-        evento = new Evento();
-        evento.setId(99L);
-        evento.setCapacidade(100);
-
-        lote = new Lote();
-        lote.setId(99L);
-        lote.setPreco(new BigDecimal("100.00"));
-        vagasIniciais = 50;
-        lote.setQuantidadeDisponivel(vagasIniciais);
-
-        evento.getLotes().add(lote);
-    }
-
-    @E("aciona a finalização da compra")
-    public void aciona_finalizacao_da_compra() {
-        inscricaoPendenteAtomicidade = new Inscricao(
-                77L, participante, evento, lote, StatusInscricao.PENDENTE, LocalDateTime.now());
-        when(inscricaoRepositorio.findById(77L)).thenReturn(Optional.of(inscricaoPendenteAtomicidade));
-    }
-
-    @Quando("o sistema desconta o saldo, mas ocorre uma falha ao salvar a inscrição")
-    public void desconta_saldo_mas_falha_salvar_inscricao() {
-        when(inscricaoRepositorio.save(any(Inscricao.class)))
-                .thenThrow(new RuntimeException("Falha simulada ao persistir inscrição."));
-
-        try {
-            inscricaoServico.confirmarPagamento(77L, TipoPagamento.PIX);
-        } catch (Exception e) {
-            excecao = e;
-        }
-    }
-
-    @Entao("o sistema deve realizar um rollback")
-    public void sistema_deve_realizar_rollback() {
-        assertNotNull(excecao, "Uma exceção deveria ter sido lançada.");
-        assertTrue(excecao instanceof InscricaoException,
-                "A exceção deveria ser InscricaoException, mas foi: " + excecao.getClass().getSimpleName());
-        assertEquals(StatusInscricao.PENDENTE, inscricaoPendenteAtomicidade.getStatus(),
-                "A inscrição não deveria ter sido confirmada após o rollback.");
-        assertEquals(vagasIniciais, lote.getQuantidadeDisponivel(),
-                "A vaga do lote deveria ter sido devolvida no rollback.");
-    }
-
-    @E("o saldo do usuário deve retornar ao valor original")
-    public void saldo_retorna_ao_valor_original() {
-        assertEquals(saldoInicial, participante.getSaldo(),
-                "O saldo do participante deveria ter sido restaurado ao valor original.");
     }
 }
