@@ -44,4 +44,11 @@ public class Lote {
     @Column(nullable = false)
     @NotNull(message = "A data de fim das vendas é obrigatória")
     private LocalDateTime dataFimVenda;
+
+    public void reservarVaga() {
+        if (this.quantidadeDisponivel <= 0) {
+            throw new RuntimeException("Não há vagas disponíveis neste lote");
+        }
+        this.quantidadeDisponivel--;
+    }
 }

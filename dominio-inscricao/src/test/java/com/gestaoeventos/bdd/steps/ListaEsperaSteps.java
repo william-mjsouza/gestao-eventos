@@ -52,6 +52,10 @@ public class ListaEsperaSteps {
     private ListaEspera resultado;
     private Exception excecao;
 
+    // ========================================================================
+    // CENÁRIO 1: Pagamento da vaga de espera dentro do prazo
+    // ========================================================================
+
     @Dado("que uma vaga foi liberada no evento lotado")
     public void vaga_liberada_no_evento_lotado() {
         excecao = null;
@@ -140,8 +144,12 @@ public class ListaEsperaSteps {
         assertNotEquals(StatusListaEspera.CARRINHO, entradaPrimeiro.getStatus());
     }
 
-    @Dado("que o ingresso foi alocado no carrinho do primeiro usuário da lista de espera")
-    public void ingresso_alocado_no_carrinho() {
+    // ========================================================================
+    // CENÁRIO 2: Repasse de vaga por expiração de tempo limite
+    // ========================================================================
+
+    @Dado("que a vaga foi alocada no carrinho do Usuário A \\(primeiro da fila)")
+    public void ingresso_alocado_no_carrinho_usuario_a() {
         excecao = null;
         resultado = null;
 
@@ -167,8 +175,8 @@ public class ListaEsperaSteps {
 
         primeiroDaFila = new Pessoa();
         primeiroDaFila.setCpf("99988877766");
-        primeiroDaFila.setNome("Bruno Costa");
-        primeiroDaFila.setEmail("bruno@email.com");
+        primeiroDaFila.setNome("Usuário A");
+        primeiroDaFila.setEmail("usuarioA@email.com");
         primeiroDaFila.setSenha("senha456");
         primeiroDaFila.setSaldo(50.0);
         primeiroDaFila.setOrganizador(false);
@@ -179,6 +187,7 @@ public class ListaEsperaSteps {
         entradaPrimeiro.setEvento(evento);
         entradaPrimeiro.setPosicao(1);
         entradaPrimeiro.setStatus(StatusListaEspera.CARRINHO);
+        // Simulando que o prazo já estourou (expirou há 3 horas)
         entradaPrimeiro.setDataExpiracaoCarrinho(LocalDateTime.now().minusHours(3));
 
         when(listaEsperaRepositorio.findByParticipanteCpfAndEventoId(primeiroDaFila.getCpf(), evento.getId()))
@@ -186,8 +195,8 @@ public class ListaEsperaSteps {
 
         segundoDaFila = new Pessoa();
         segundoDaFila.setCpf("55566677788");
-        segundoDaFila.setNome("Carla Dias");
-        segundoDaFila.setEmail("carla@email.com");
+        segundoDaFila.setNome("Usuário B");
+        segundoDaFila.setEmail("usuarioB@email.com");
         segundoDaFila.setSenha("senha789");
         segundoDaFila.setSaldo(200.0);
         segundoDaFila.setOrganizador(false);
@@ -207,16 +216,16 @@ public class ListaEsperaSteps {
         when(listaEsperaRepositorio.save(any(ListaEspera.class))).thenAnswer(inv -> inv.getArgument(0));
     }
 
-    @E("o tempo limite para pagamento era de {int} horas")
-    public void tempo_limite_era_de_horas(int horas) {
+    @E("o tempo limite para pagamento é de {int} horas")
+    public void tempo_limite_pagamento_horas(int horas) {
         assertEquals(ListaEsperaServico.HORAS_LIMITE_PAGAMENTO, horas,
                 "O tempo limite configurado no sistema deveria ser de " + horas + " horas.");
         assertTrue(entradaPrimeiro.getDataExpiracaoCarrinho().isBefore(LocalDateTime.now()),
-                "O prazo do primeiro usuário deveria já ter expirado.");
+                "O prazo do Usuário A deveria já ter expirado na simulação.");
     }
 
-    @Quando("não realiza o pagamento dentro do tempo limite")
-    public void nao_realiza_pagamento_no_prazo() {
+    @Quando("o tempo limite é atingido sem que o Usuário A finalize a compra")
+    public void tempo_limite_atingido_sem_pagamento() {
         try {
             listaEsperaServico.confirmarPagamento(primeiroDaFila.getCpf(), evento.getId());
         } catch (Exception e) {
@@ -224,21 +233,20 @@ public class ListaEsperaSteps {
         }
     }
 
-    @Entao("o sistema deve remover o ingresso do carrinho desse usuário")
-    public void sistema_remove_ingresso_do_carrinho() {
+    @Entao("o sistema deve remover o ingresso do carrinho do Usuário A")
+    public void sistema_remove_usuario_a() {
         assertNotNull(excecao, "Deveria ter lançado exceção por prazo expirado.");
-        assertTrue(excecao instanceof ListaEsperaException,
-                "A exceção deveria ser uma ListaEsperaException.");
+        assertTrue(excecao instanceof ListaEsperaException, "A exceção deveria ser uma ListaEsperaException.");
         assertEquals(StatusListaEspera.EXPIRADO, entradaPrimeiro.getStatus(),
-                "O status do primeiro deveria ser EXPIRADO.");
+                "O status do Usuário A deveria ser EXPIRADO.");
     }
 
-    @E("adicionar o ingresso no carrinho do próximo participante da fila")
-    public void ingresso_repassado_para_proximo() {
+    @E("adicionar o ingresso no carrinho do Usuário B \\(segundo da fila)")
+    public void sistema_adiciona_usuario_b() {
         assertEquals(StatusListaEspera.CARRINHO, entradaSegundo.getStatus(),
-                "O segundo da fila deveria ter recebido o ingresso no carrinho.");
+                "O Usuário B (segundo da fila) deveria ter recebido o ingresso no carrinho.");
         assertNotNull(entradaSegundo.getDataExpiracaoCarrinho(),
-                "O segundo da fila deveria ter recebido um prazo de pagamento.");
+                "O Usuário B deveria ter recebido um novo prazo de pagamento.");
         verify(listaEsperaRepositorio, atLeast(2)).save(any(ListaEspera.class));
     }
 }

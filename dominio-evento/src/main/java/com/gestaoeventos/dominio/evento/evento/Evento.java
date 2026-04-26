@@ -38,6 +38,10 @@ public class Evento {
     private LocalDateTime dataHoraInicio;
 
     @Column(nullable = false)
+    @NotNull(message = "A data e horário de término são obrigatórios")
+    private LocalDateTime dataHoraTermino;
+
+    @Column(nullable = false)
     @NotBlank(message = "O local é obrigatório")
     private String local;
 
@@ -61,4 +65,8 @@ public class Evento {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private StatusEvento status = StatusEvento.ATIVO;
+
+    @Column(nullable = false)
+    @Min(value = 0, message = "A idade mínima não pode ser negativa")
+    private Integer idadeMinima = 0;
 }

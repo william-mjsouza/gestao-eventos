@@ -6,14 +6,19 @@ import com.gestaoeventos.dominio.evento.lote.Lote;
 import com.gestaoeventos.dominio.inscricao.listaespera.ListaEsperaServico;
 import com.gestaoeventos.dominio.participante.pessoa.Pessoa;
 import com.gestaoeventos.dominio.participante.pessoa.PessoaRepositorio;
+import com.gestaoeventos.dominio.participante.pessoa.PessoaServico;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 
 @Service
 public class CancelamentoInscricaoServico {
+
+    private static final long HORAS_LIMITE_CANCELAMENTO = 48;
+    private static final long HORAS_ESTORNO_INTEGRAL = 168; // 7 dias
 
     @Autowired
     private InscricaoRepositorio inscricaoRepositorio;
@@ -27,6 +32,9 @@ public class CancelamentoInscricaoServico {
     @Autowired
     private ListaEsperaServico listaEsperaServico;
 
+    @Autowired
+    private PessoaServico pessoaServico;
+
     @Transactional
     public Inscricao executar(Long inscricaoId) {
         Inscricao inscricao = inscricaoRepositorio.findById(inscricaoId)
@@ -36,9 +44,12 @@ public class CancelamentoInscricaoServico {
             throw new InscricaoException("Esta inscrição já se encontra cancelada.");
         }
 
-        LocalDateTime dataLimiteCancelamento = inscricao.getEvento().getDataHoraInicio().minusHours(24);
-        if (LocalDateTime.now().isAfter(dataLimiteCancelamento)) {
-            throw new InscricaoException("\"Não é possível cancelar, fora do prazo\"");
+        LocalDateTime agora = LocalDateTime.now();
+        LocalDateTime dataEvento = inscricao.getEvento().getDataHoraInicio();
+        long horasRestantes = ChronoUnit.HOURS.between(agora, dataEvento);
+
+        if (horasRestantes < HORAS_LIMITE_CANCELAMENTO) {
+            throw new InscricaoException("Não é possível cancelar com menos de 48 horas de antecedência.");
         }
 
         boolean eraConfirmada = inscricao.getStatus() == StatusInscricao.CONFIRMADA;
@@ -46,12 +57,13 @@ public class CancelamentoInscricaoServico {
             Pessoa participante = inscricao.getParticipante();
             Lote lote = inscricao.getLote();
 
-            double valorLote = lote.getPreco() != null ? lote.getPreco().doubleValue() : 0.0;
+            double valorPago = lote.getPreco() != null ? lote.getPreco().doubleValue() : 0.0;
+            double percentual = horasRestantes > HORAS_ESTORNO_INTEGRAL ? 1.0 : 0.5;
+            double valorEstorno = valorPago * percentual;
 
-            participante.setSaldo(participante.getSaldo() + valorLote);
+            pessoaServico.estornarSaldo(participante.getCpf(), valorEstorno);
+
             lote.setQuantidadeDisponivel(lote.getQuantidadeDisponivel() + 1);
-
-            pessoaRepositorio.save(participante);
             eventoRepositorio.save(inscricao.getEvento());
         }
 

@@ -4,6 +4,7 @@ import com.gestaoeventos.dominio.compartilhado.StatusEvento;
 import com.gestaoeventos.dominio.participante.pessoa.Pessoa;
 import com.gestaoeventos.dominio.participante.pessoa.PessoaRepositorio;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -17,6 +18,9 @@ public class EventoServico {
     @Autowired
     private PessoaRepositorio pessoaRepositorio;
 
+    @Autowired
+    private ApplicationEventPublisher eventPublisher;
+
     public Evento salvar(Evento evento) {
         Pessoa organizador = pessoaRepositorio.findById(evento.getOrganizador().getCpf())
                 .orElseThrow(() -> new EventoException("Organizador não encontrado no sistema."));
@@ -27,6 +31,18 @@ public class EventoServico {
 
         if (evento.getDataHoraInicio() != null && evento.getDataHoraInicio().isBefore(LocalDateTime.now())) {
             throw new EventoException("A data e horário do evento devem ser futuros. Data inválida.");
+        }
+
+        if (evento.getDataHoraTermino() == null) {
+            throw new EventoException("A data de término é obrigatória.");
+        }
+
+        if (evento.getDataHoraTermino().isBefore(evento.getDataHoraInicio()) || evento.getDataHoraTermino().isEqual(evento.getDataHoraInicio())) {
+            throw new EventoException("A data de término deve ser posterior à data de início.");
+        }
+
+        if (eventoRepositorio.existeColisaoLocalEHorario(evento.getLocal(), evento.getDataHoraInicio(), evento.getDataHoraTermino())) {
+            throw new EventoException("O local já está ocupado neste período.");
         }
 
         if (evento.getLotes() == null || evento.getLotes().isEmpty()) {
@@ -60,6 +76,12 @@ public class EventoServico {
         }
 
         evento.setStatus(novoStatus);
-        return eventoRepositorio.save(evento);
+        Evento salvo = eventoRepositorio.save(evento);
+
+        if (novoStatus == StatusEvento.CANCELADO) {
+            eventPublisher.publishEvent(new EventoCanceladoEvent(eventoId));
+        }
+
+        return salvo;
     }
 }
