@@ -15,6 +15,7 @@ import com.gestaoeventos.dominio.inscricao.listaespera.ListaEsperaRepositorio;
 import com.gestaoeventos.dominio.inscricao.listaespera.ListaEsperaServico;
 import com.gestaoeventos.dominio.participante.pessoa.Pessoa;
 import com.gestaoeventos.dominio.participante.pessoa.PessoaRepositorio;
+import com.gestaoeventos.dominio.participante.pessoa.TipoPagamento;
 import io.cucumber.java.pt.Dado;
 import io.cucumber.java.pt.E;
 import io.cucumber.java.pt.Entao;
@@ -83,7 +84,7 @@ public class ControleVagasSteps {
             Inscricao pend = inscricaoServico.iniciarInscricao(participante.getCpf(), evento.getId(), lote.getId());
             when(inscricaoRepositorio.countByEventoIdAndStatusNot(10L, StatusInscricao.CANCELADA)).thenReturn(1L);
             when(inscricaoRepositorio.save(any(Inscricao.class))).thenReturn(confirmada);
-            inscricaoGerada = inscricaoServico.confirmarPagamento(pend.getId());
+            inscricaoGerada = inscricaoServico.confirmarPagamento(pend.getId(), TipoPagamento.PIX);
         } catch (Exception e) {
             excecao = e;
         }

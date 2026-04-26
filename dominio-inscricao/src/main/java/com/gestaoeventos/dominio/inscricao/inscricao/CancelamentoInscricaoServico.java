@@ -6,6 +6,7 @@ import com.gestaoeventos.dominio.evento.lote.Lote;
 import com.gestaoeventos.dominio.inscricao.listaespera.ListaEsperaServico;
 import com.gestaoeventos.dominio.participante.pessoa.Pessoa;
 import com.gestaoeventos.dominio.participante.pessoa.PessoaRepositorio;
+import com.gestaoeventos.dominio.participante.pessoa.PessoaServico; // Importe o serviço
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +27,9 @@ public class CancelamentoInscricaoServico {
 
     @Autowired
     private ListaEsperaServico listaEsperaServico;
+
+    @Autowired
+    private PessoaServico pessoaServico;
 
     @Transactional
     public Inscricao executar(Long inscricaoId) {
@@ -48,10 +52,9 @@ public class CancelamentoInscricaoServico {
 
             double valorLote = lote.getPreco() != null ? lote.getPreco().doubleValue() : 0.0;
 
-            participante.setSaldo(participante.getSaldo() + valorLote);
+            pessoaServico.estornarSaldo(participante.getCpf(), valorLote);
+            
             lote.setQuantidadeDisponivel(lote.getQuantidadeDisponivel() + 1);
-
-            pessoaRepositorio.save(participante);
             eventoRepositorio.save(inscricao.getEvento());
         }
 
