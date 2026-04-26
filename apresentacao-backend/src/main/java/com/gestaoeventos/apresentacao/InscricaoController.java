@@ -3,6 +3,7 @@ package com.gestaoeventos.apresentacao;
 import com.gestaoeventos.dominio.inscricao.inscricao.CancelamentoInscricaoServico;
 import com.gestaoeventos.dominio.inscricao.inscricao.Inscricao;
 import com.gestaoeventos.dominio.inscricao.inscricao.InscricaoServico;
+import com.gestaoeventos.dominio.participante.pessoa.TipoPagamento; // Importe o Enum
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -32,8 +33,13 @@ public class InscricaoController {
     }
 
     @PostMapping("/{id}/pagar")
-    public ResponseEntity<Inscricao> confirmarPagamento(@PathVariable Long id) {
-        Inscricao inscricaoConfirmada = inscricaoServico.confirmarPagamento(id);
+    public ResponseEntity<Inscricao> confirmarPagamento(
+            @PathVariable Long id,
+            @RequestBody Map<String, String> payload) { 
+
+        TipoPagamento tipo = TipoPagamento.valueOf(payload.get("tipoPagamento").toUpperCase());
+
+        Inscricao inscricaoConfirmada = inscricaoServico.confirmarPagamento(id, tipo);
         return ResponseEntity.ok(inscricaoConfirmada);
     }
 
