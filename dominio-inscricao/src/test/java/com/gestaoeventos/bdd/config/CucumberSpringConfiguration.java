@@ -11,6 +11,9 @@ import io.cucumber.spring.CucumberContextConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
+// REVERTIDO ao original: os outros testes (Favorito, Avaliacao, etc.)
+// dependem destes mocks para fazer when(...).thenReturn(...).
+// O controleHorarioSteps resolve o banco real via @SpyBean na própria classe.
 @CucumberContextConfiguration
 @SpringBootTest(classes = TestApplication.class)
 public class CucumberSpringConfiguration {

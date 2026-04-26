@@ -38,6 +38,10 @@ public class Evento {
     private LocalDateTime dataHoraInicio;
 
     @Column(nullable = false)
+    @NotNull(message = "A data e horário de término são obrigatórios")
+    private LocalDateTime dataHoraFim;
+
+    @Column(nullable = false)
     @NotBlank(message = "O local é obrigatório")
     private String local;
 
@@ -91,5 +95,16 @@ public class Evento {
     public Pessoa proximoDaListaEspera() {
         if (listaEspera.isEmpty()) return null;
         return listaEspera.remove(0); // FIFO
+    }
+
+    public boolean temConflitoHorario(LocalDateTime outroInicio, LocalDateTime outroFim) {
+        if (this.dataHoraInicio == null || this.dataHoraFim == null || outroInicio == null || outroFim == null) {
+            return false;
+        }
+        return this.dataHoraInicio.isBefore(outroFim) && this.dataHoraFim.isAfter(outroInicio);
+    }
+
+    public boolean periodoValido() {
+        return dataHoraFim != null && dataHoraInicio != null && dataHoraFim.isAfter(dataHoraInicio);
     }
 }

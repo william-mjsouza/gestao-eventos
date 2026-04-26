@@ -1,7 +1,7 @@
 package com.gestaoeventos.dominio.evento.evento;
+
 import com.gestaoeventos.dominio.evento.lote.LoteServico;
 import com.gestaoeventos.dominio.evento.lote.Lote;
-
 import com.gestaoeventos.dominio.compartilhado.StatusEvento;
 import com.gestaoeventos.dominio.participante.pessoa.Pessoa;
 import com.gestaoeventos.dominio.participante.pessoa.PessoaRepositorio;
@@ -69,7 +69,6 @@ public class EventoServico {
     }
 
     public String inscrever(Long eventoId, String cpfPessoa) {
-
         Evento evento = eventoRepositorio.findById(eventoId)
                 .orElseThrow(() -> new EventoException("Evento não encontrado."));
 
@@ -77,7 +76,6 @@ public class EventoServico {
                 .orElseThrow(() -> new EventoException("Pessoa não encontrada."));
 
         Lote loteAtivo;
-
         try {
             loteAtivo = loteServico.obterLoteAtivo(eventoId);
         } catch (Exception e) {
@@ -93,12 +91,9 @@ public class EventoServico {
             eventoRepositorio.save(evento);
             return "Adicionado à lista de espera";
         }
-
-
     }
 
     public void cancelar(Long eventoId) {
-
         Evento evento = eventoRepositorio.findById(eventoId)
                 .orElseThrow(() -> new EventoException("Evento não encontrado."));
 
@@ -110,9 +105,7 @@ public class EventoServico {
         lote.liberarVaga();
 
         if (evento.temVaga() && lote.temVaga()) {
-
             Pessoa proximo = evento.proximoDaListaEspera();
-
             if (proximo != null) {
                 lote.ocuparVaga();
             }

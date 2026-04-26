@@ -2,11 +2,9 @@ package com.gestaoeventos.dominio.inscricao.inscricao;
 
 import com.gestaoeventos.dominio.compartilhado.StatusEvento;
 import com.gestaoeventos.dominio.compartilhado.StatusInscricao;
-import com.gestaoeventos.dominio.evento.evento.Evento;
-import com.gestaoeventos.dominio.evento.evento.EventoRepositorio;
+import com.gestaoeventos.dominio.evento.evento.*;
 import com.gestaoeventos.dominio.evento.lote.Lote;
-import com.gestaoeventos.dominio.participante.pessoa.Pessoa;
-import com.gestaoeventos.dominio.participante.pessoa.PessoaRepositorio;
+import com.gestaoeventos.dominio.participante.pessoa.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,12 +12,22 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class InscricaoServico {
 
-    @Autowired
-    private InscricaoRepositorio inscricaoRepositorio;
-    @Autowired
-    private EventoRepositorio eventoRepositorio;
-    @Autowired
-    private PessoaRepositorio pessoaRepositorio;
+    @Autowired private InscricaoRepositorio inscricaoRepositorio;
+    @Autowired private EventoRepositorio eventoRepositorio;
+    @Autowired private PessoaRepositorio pessoaRepositorio;
+
+    public void validarConflito(Pessoa pessoa, Evento novoEvento) {
+        var conflitos = inscricaoRepositorio.buscarConflitos(
+                pessoa.getCpf(),
+                novoEvento.getDataHoraInicio(),
+                novoEvento.getDataHoraFim()
+        );
+
+        if (!conflitos.isEmpty()) {
+            throw new EventoException("Conflito de horário: participante já inscrito no evento '"
+                    + conflitos.get(0).getEvento().getNome() + "'.");
+        }
+    }
 
     @Transactional
     public Inscricao iniciarInscricao(String cpf, Long eventoId, Long loteId) {
@@ -30,11 +38,13 @@ public class InscricaoServico {
         Evento evento = eventoRepositorio.findById(eventoId)
                 .orElseThrow(() -> new InscricaoException("Evento não encontrado."));
 
+        Pessoa participante = pessoaRepositorio.findById(cpf)
+                .orElseThrow(() -> new InscricaoException("Participante não encontrado."));
+
+        validarConflito(participante, evento);
+
         if (evento.getStatus() == StatusEvento.CANCELADO) {
             throw new InscricaoException("Não é possível se inscrever em um evento cancelado.");
-        }
-        if (evento.getStatus() == StatusEvento.ENCERRADO) {
-            throw new InscricaoException("Não é possível se inscrever em um evento encerrado.");
         }
 
         long inscritos = inscricaoRepositorio.countByEventoIdAndStatusNot(eventoId, StatusInscricao.CANCELADA);
@@ -42,13 +52,10 @@ public class InscricaoServico {
             throw new InscricaoException("O evento não possui mais vagas.");
         }
 
-        Pessoa participante = pessoaRepositorio.findById(cpf)
-                .orElseThrow(() -> new InscricaoException("Participante não encontrado."));
-
         Lote lote = evento.getLotes().stream()
-                .filter(l -> l.getId().equals(loteId) && l.getQuantidadeDisponivel() > 0)
+                .filter(l -> l.getId().equals(loteId))
                 .findFirst()
-                .orElseThrow(() -> new InscricaoException("Lote indisponível ou esgotado."));
+                .orElseThrow(() -> new InscricaoException("Lote indisponível."));
 
         Inscricao inscricao = new Inscricao();
         inscricao.setParticipante(participante);
@@ -81,7 +88,6 @@ public class InscricaoServico {
         inscricao.setStatus(StatusInscricao.CONFIRMADA);
 
         pessoaRepositorio.save(participante);
-        eventoRepositorio.save(inscricao.getEvento());
         return inscricaoRepositorio.save(inscricao);
     }
 }

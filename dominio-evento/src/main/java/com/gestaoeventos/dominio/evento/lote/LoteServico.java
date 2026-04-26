@@ -17,7 +17,7 @@ public class LoteServico {
         Evento evento = eventoRepositorio.findById(eventoId)
                 .orElseThrow(() -> new LoteException("Evento não encontrado."));
 
-        LocalDateTime agora = LocalDateTime.now();
+        LocalDateTime agora =   LocalDateTime.now();
 
         return evento.getLotes().stream()
                 .filter(lote -> lote.getQuantidadeDisponivel() > 0)
