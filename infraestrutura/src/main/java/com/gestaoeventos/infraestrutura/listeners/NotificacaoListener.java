@@ -1,4 +1,4 @@
-package com.gestaoeventos.infraestrutura.persistencia.jpa;
+package com.gestaoeventos.infraestrutura.listeners;
 
 import com.gestaoeventos.aplicacao.NotificarFilaUseCase;
 import com.gestaoeventos.dominio.inscricao.inscricao.evento.VagaLiberadaFilaEvent;
