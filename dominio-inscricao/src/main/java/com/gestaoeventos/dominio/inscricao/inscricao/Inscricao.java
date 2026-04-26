@@ -12,7 +12,6 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
 @Entity
 @Table(name = "INSCRICAO")
 public class Inscricao {
@@ -39,4 +38,17 @@ public class Inscricao {
 
     @Column(nullable = false)
     private LocalDateTime dataReserva = LocalDateTime.now();
+
+    @Column(name = "cupom_codigo")
+    private String cupomCodigo;
+
+    public Inscricao(Long id, Pessoa participante, Evento evento, Lote lote,
+                     StatusInscricao status, LocalDateTime dataReserva) {
+        this.id = id;
+        this.participante = participante;
+        this.evento = evento;
+        this.lote = lote;
+        this.status = status;
+        this.dataReserva = dataReserva;
+    }
 }
