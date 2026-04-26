@@ -13,6 +13,7 @@ import java.util.List;
 @Repository
 public interface InscricaoRepositorio extends JpaRepository<Inscricao, Long> {
     boolean existsByParticipanteCpfAndEventoId(String cpf, Long eventoId);
+    boolean existsByParticipanteCpfAndEventoIdAndStatus(String cpf, Long eventoId, StatusInscricao status);
     long countByEventoId(Long eventoId);
     long countByEventoIdAndStatusNot(Long eventoId, StatusInscricao status);
 
