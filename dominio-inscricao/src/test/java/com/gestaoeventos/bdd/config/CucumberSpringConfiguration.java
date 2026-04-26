@@ -5,6 +5,7 @@ import com.gestaoeventos.dominio.inscricao.carrinho.CarrinhoRepositorio;
 import com.gestaoeventos.dominio.evento.evento.EventoRepositorio;
 import com.gestaoeventos.dominio.inscricao.TestApplication;
 import com.gestaoeventos.dominio.inscricao.avaliacao.AvaliacaoRepositorio;
+import com.gestaoeventos.dominio.inscricao.cupom.CupomRepositorio;
 import com.gestaoeventos.dominio.inscricao.favorito.FavoritoRepositorio;
 import com.gestaoeventos.dominio.inscricao.inscricao.InscricaoRepositorio;
 import com.gestaoeventos.dominio.inscricao.listaespera.ListaEsperaRepositorio;
@@ -13,9 +14,7 @@ import io.cucumber.spring.CucumberContextConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
-// REVERTIDO ao original: os outros testes (Favorito, Avaliacao, etc.)
-// dependem destes mocks para fazer when(...).thenReturn(...).
-// O controleHorarioSteps resolve o banco real via @SpyBean na própria classe.
+
 @CucumberContextConfiguration
 @SpringBootTest(classes = TestApplication.class)
 public class CucumberSpringConfiguration {
@@ -43,4 +42,7 @@ public class CucumberSpringConfiguration {
 
     @MockitoBean
     private ListaEsperaRepositorio listaEsperaRepositorio;
+
+    @MockitoBean
+    private CupomRepositorio cupomRepositorio;
 }
