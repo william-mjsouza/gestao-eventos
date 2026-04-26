@@ -7,4 +7,5 @@ import java.util.List;
 
 public interface AvaliacaoRepositorioJpa extends JpaRepository<Avaliacao, Long> {
     List<Avaliacao> findByEventoId(Long eventoId);
+    boolean existsByPessoaCpfAndEventoId(String pessoaCpf, Long eventoId);
 }

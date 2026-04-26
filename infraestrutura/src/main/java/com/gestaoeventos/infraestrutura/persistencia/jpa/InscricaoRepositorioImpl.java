@@ -56,4 +56,8 @@ public class InscricaoRepositorioImpl implements InscricaoRepositorio {
     public boolean existsByParticipanteCpfAndEventoIdAndCupomCodigo(String cpf, Long eventoId, String cupomCodigo) {
         return jpa.existsByParticipanteCpfAndEventoIdAndCupomCodigo(cpf, eventoId, cupomCodigo);
     }
+    @Override
+    public boolean existsByParticipanteCpfAndEventoIdAndStatus(String cpf, Long eventoId, StatusInscricao status) {
+        return jpa.existsByParticipanteCpfAndEventoIdAndStatus(cpf, eventoId, status);
+    }
 }

@@ -1,6 +1,8 @@
 package com.gestaoeventos.bdd.config;
 
+import com.gestaoeventos.dominio.evento.lote.LoteRepositorio;
 import com.gestaoeventos.dominio.evento.lote.LoteServico;
+import com.gestaoeventos.dominio.evento.relatorio.RelatorioRepositorio;
 import com.gestaoeventos.dominio.inscricao.carrinho.CarrinhoRepositorio;
 import com.gestaoeventos.dominio.evento.evento.EventoRepositorio;
 import com.gestaoeventos.dominio.evento.evento.EventoServico;
@@ -46,4 +48,10 @@ public class CucumberSpringConfiguration {
 
     @MockitoBean
     private CupomRepositorio cupomRepositorio;
+
+    @MockitoBean
+    private RelatorioRepositorio relatorioRepositorio;
+
+    @MockitoBean
+    private LoteRepositorio loteRepositorio;
 }

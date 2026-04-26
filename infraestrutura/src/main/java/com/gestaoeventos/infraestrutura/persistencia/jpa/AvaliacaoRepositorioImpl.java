@@ -20,4 +20,8 @@ public class AvaliacaoRepositorioImpl implements AvaliacaoRepositorio {
 
     @Override
     public List<Avaliacao> findByEventoId(Long eventoId) { return jpa.findByEventoId(eventoId); }
+    @Override
+    public boolean existsByPessoaCpfAndEventoId(String pessoaCpf, Long eventoId) {
+        return jpa.existsByPessoaCpfAndEventoId(pessoaCpf, eventoId);
+    }
 }

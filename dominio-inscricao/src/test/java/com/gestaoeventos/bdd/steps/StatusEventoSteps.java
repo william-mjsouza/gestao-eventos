@@ -83,13 +83,13 @@ public class StatusEventoSteps {
         when(eventoRepositorio.existsByNome(evento.getNome())).thenReturn(false);
         when(eventoRepositorio.findById(evento.getId())).thenReturn(Optional.of(evento));
         when(eventoRepositorio.save(any(Evento.class))).thenAnswer(i -> i.getArgument(0));
-        when(eventoServico.alterarStatus(eq(evento.getId()), any(StatusEvento.class)))
-                .thenAnswer(invocation -> {
-                    StatusEvento novoStatus = invocation.getArgument(1);
-                    evento.setStatus(novoStatus);
-                    eventoRepositorio.save(evento);
-                    return evento;
-                });
+       // when(eventoServico.alterarStatus(eq(evento.getId()), any(StatusEvento.class)))
+        //        .thenAnswer(invocation -> {
+        //            StatusEvento novoStatus = invocation.getArgument(1);
+         //           evento.setStatus(novoStatus);
+          //          eventoRepositorio.save(evento);
+          //          return evento;
+         //       });
     }
 
     @Quando("o organizador publica o evento")

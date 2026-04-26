@@ -13,7 +13,7 @@ public interface InscricaoRepositorioJpa extends JpaRepository<Inscricao, Long> 
     boolean existsByParticipanteCpfAndEventoId(String cpf, Long eventoId);
     long countByEventoId(Long eventoId);
     long countByEventoIdAndStatusNot(Long eventoId, StatusInscricao status);
-
+    boolean existsByParticipanteCpfAndEventoIdAndStatus(String cpf, Long eventoId, StatusInscricao status);
     @Query("SELECT i FROM Inscricao i " +
            "WHERE i.participante.cpf = :cpf " +
            "AND i.status = com.gestaoeventos.dominio.compartilhado.StatusInscricao.CONFIRMADA " +
