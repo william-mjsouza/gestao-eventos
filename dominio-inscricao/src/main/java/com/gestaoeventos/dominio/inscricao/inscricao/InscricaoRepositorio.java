@@ -10,6 +10,7 @@ public interface InscricaoRepositorio {
     Optional<Inscricao> findById(Long id);
     Inscricao save(Inscricao inscricao);
     boolean existsByParticipanteCpfAndEventoId(String cpf, Long eventoId);
+    boolean existsByParticipanteCpfAndEventoIdAndStatus(String cpf, Long eventoId, StatusInscricao status);
     long countByEventoId(Long eventoId);
     long countByEventoIdAndStatusNot(Long eventoId, StatusInscricao status);
     List<Inscricao> buscarConflitos(String cpf, LocalDateTime inicio, LocalDateTime fim);
