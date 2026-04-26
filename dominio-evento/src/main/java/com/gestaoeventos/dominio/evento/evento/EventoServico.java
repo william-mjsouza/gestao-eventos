@@ -1,5 +1,7 @@
 package com.gestaoeventos.dominio.evento.evento;
 
+import com.gestaoeventos.dominio.evento.lote.LoteServico;
+import com.gestaoeventos.dominio.evento.lote.Lote;
 import com.gestaoeventos.dominio.compartilhado.StatusEvento;
 import com.gestaoeventos.dominio.participante.pessoa.Pessoa;
 import com.gestaoeventos.dominio.participante.pessoa.PessoaRepositorio;
@@ -11,6 +13,9 @@ import java.time.LocalDateTime;
 
 @Service
 public class EventoServico {
+
+    @Autowired
+    private LoteServico loteServico;
 
     @Autowired
     private EventoRepositorio eventoRepositorio;
@@ -83,5 +88,50 @@ public class EventoServico {
         }
 
         return salvo;
+    }
+
+    public String inscrever(Long eventoId, String cpfPessoa) {
+        Evento evento = eventoRepositorio.findById(eventoId)
+                .orElseThrow(() -> new EventoException("Evento não encontrado."));
+
+        Pessoa pessoa = pessoaRepositorio.findById(cpfPessoa)
+                .orElseThrow(() -> new EventoException("Pessoa não encontrada."));
+
+        Lote loteAtivo;
+        try {
+            loteAtivo = loteServico.obterLoteAtivo(eventoId);
+        } catch (Exception e) {
+            loteAtivo = null;
+        }
+
+        if (loteAtivo != null && loteAtivo.temVaga() && evento.temVaga()) {
+            loteAtivo.ocuparVaga();
+            eventoRepositorio.save(evento);
+            return "Inscrição confirmada";
+        } else {
+            evento.adicionarNaListaEspera(pessoa);
+            eventoRepositorio.save(evento);
+            return "Adicionado à lista de espera";
+        }
+    }
+
+    public void cancelar(Long eventoId) {
+        Evento evento = eventoRepositorio.findById(eventoId)
+                .orElseThrow(() -> new EventoException("Evento não encontrado."));
+
+        Lote lote = evento.getLotes().stream()
+                .filter(l -> l.getQuantidadeDisponivel() < l.getQuantidadeTotal())
+                .findFirst()
+                .orElseThrow(() -> new EventoException("Nenhuma inscrição para cancelar."));
+
+        lote.liberarVaga();
+
+        if (evento.temVaga() && lote.temVaga()) {
+            Pessoa proximo = evento.proximoDaListaEspera();
+            if (proximo != null) {
+                lote.ocuparVaga();
+            }
+        }
+        eventoRepositorio.save(evento);
     }
 }

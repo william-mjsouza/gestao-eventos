@@ -39,6 +39,7 @@ public class Evento {
 
     @Column(nullable = false)
     @NotNull(message = "A data e horário de término são obrigatórios")
+    private LocalDateTime dataHoraFim;
     private LocalDateTime dataHoraTermino;
 
     @Column(nullable = false)
@@ -66,6 +67,51 @@ public class Evento {
     @Column(nullable = false)
     private StatusEvento status = StatusEvento.ATIVO;
 
+    @Transient
+    private List<Pessoa> listaEspera = new ArrayList<>();
+
+    public int getTotalVagasDisponiveis() {
+        return lotes.stream()
+                .mapToInt(Lote::getQuantidadeDisponivel)
+                .sum();
+    }
+
+    public int getTotalVagasOcupadas() {
+        return lotes.stream()
+                .mapToInt(lote -> lote.getQuantidadeTotal() - lote.getQuantidadeDisponivel())
+                .sum();
+    }
+    public boolean temVaga() {
+        return getTotalVagasOcupadas() < capacidade;
+    }
+
+    public boolean capacidadeValida() {
+        int totalLotes = lotes.stream()
+                .mapToInt(Lote::getQuantidadeTotal)
+                .sum();
+
+        return totalLotes <= capacidade;
+    }
+
+    public void adicionarNaListaEspera(Pessoa pessoa) {
+        listaEspera.add(pessoa);
+    }
+
+    public Pessoa proximoDaListaEspera() {
+        if (listaEspera.isEmpty()) return null;
+        return listaEspera.remove(0); // FIFO
+    }
+
+    public boolean temConflitoHorario(LocalDateTime outroInicio, LocalDateTime outroFim) {
+        if (this.dataHoraInicio == null || this.dataHoraFim == null || outroInicio == null || outroFim == null) {
+            return false;
+        }
+        return this.dataHoraInicio.isBefore(outroFim) && this.dataHoraFim.isAfter(outroInicio);
+    }
+
+    public boolean periodoValido() {
+        return dataHoraFim != null && dataHoraInicio != null && dataHoraFim.isAfter(dataHoraInicio);
+    }
     @Column(nullable = false)
     @Min(value = 0, message = "A idade mínima não pode ser negativa")
     private Integer idadeMinima = 0;
