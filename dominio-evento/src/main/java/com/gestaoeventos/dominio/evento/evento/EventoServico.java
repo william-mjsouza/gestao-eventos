@@ -4,6 +4,7 @@ import com.gestaoeventos.dominio.compartilhado.StatusEvento;
 import com.gestaoeventos.dominio.participante.pessoa.Pessoa;
 import com.gestaoeventos.dominio.participante.pessoa.PessoaRepositorio;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -16,6 +17,9 @@ public class EventoServico {
 
     @Autowired
     private PessoaRepositorio pessoaRepositorio;
+
+    @Autowired
+    private ApplicationEventPublisher eventPublisher;
 
     public Evento salvar(Evento evento) {
         Pessoa organizador = pessoaRepositorio.findById(evento.getOrganizador().getCpf())
@@ -60,6 +64,12 @@ public class EventoServico {
         }
 
         evento.setStatus(novoStatus);
-        return eventoRepositorio.save(evento);
+        Evento salvo = eventoRepositorio.save(evento);
+
+        if (novoStatus == StatusEvento.CANCELADO) {
+            eventPublisher.publishEvent(new EventoCanceladoEvent(eventoId));
+        }
+
+        return salvo;
     }
 }

@@ -185,7 +185,7 @@ public class InscricaoSteps {
     public void exibir_mensagem_prazo_excedido() {
         assertTrue(excecao instanceof InscricaoException, "Deveria ser uma InscricaoException");
         String mensagemErro = excecao.getMessage().toLowerCase();
-        assertTrue(mensagemErro.contains("fora do prazo"),
+        assertTrue(mensagemErro.contains("48 horas"),
                 "A mensagem de erro não informou o motivo do bloqueio. Mensagem atual: " + excecao.getMessage());
     }
 }
