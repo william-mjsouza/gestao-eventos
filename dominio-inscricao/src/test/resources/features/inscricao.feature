@@ -22,6 +22,13 @@ Funcionalidade: Inscrição em evento
     E o saldo do participante deve ser estornado
     E a vaga deve voltar para o lote
 
+  Cenário: Rollback de saldo por falha na geração do ingresso
+    Dado que o usuário tem saldo suficiente
+    E aciona a finalização da compra
+    Quando o sistema desconta o saldo, mas ocorre uma falha ao salvar a inscrição
+    Então o sistema deve realizar um rollback
+    E o saldo do usuário deve retornar ao valor original
+
   Cenário: Cancelar inscrição com menos de 48 horas não é permitido
     Dado que um participante possui uma inscrição confirmada
     E o evento está marcado para daqui a 2 horas
