@@ -1,7 +1,7 @@
-package com.gestaoeventos.dominio.inscricao.listaespera;
+package com.gestaoeventos.dominio.inscricao.carrinho;
 
-import com.gestaoeventos.dominio.compartilhado.StatusListaEspera;
 import com.gestaoeventos.dominio.evento.evento.Evento;
+import com.gestaoeventos.dominio.evento.lote.Lote;
 import com.gestaoeventos.dominio.participante.pessoa.Pessoa;
 import jakarta.persistence.*;
 import lombok.*;
@@ -13,8 +13,8 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "LISTA_ESPERA")
-public class ListaEspera {
+@Table(name = "CARRINHO")
+public class Carrinho {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -28,12 +28,10 @@ public class ListaEspera {
     @JoinColumn(name = "evento_id")
     private Evento evento;
 
-    @Column(nullable = false)
-    private int posicao;
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "lote_id")
+    private Lote lote;
 
-    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private StatusListaEspera status = StatusListaEspera.AGUARDANDO;
-
-    private LocalDateTime dataExpiracaoCarrinho;
+    private LocalDateTime dataAdicao = LocalDateTime.now();
 }

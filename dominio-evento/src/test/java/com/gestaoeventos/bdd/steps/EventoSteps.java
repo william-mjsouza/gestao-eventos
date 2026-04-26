@@ -59,6 +59,7 @@ public class EventoSteps {
         evento.setCapacidade(500);
         evento.setDataHoraInicio(LocalDateTime.now().plusDays(30));
         evento.setDataHoraTermino(LocalDateTime.now().plusDays(30).plusHours(5));
+        evento.setIdadeMinima(18);
 
         when(eventoRepositorio.existsByNome(evento.getNome())).thenReturn(false);
     }
@@ -99,6 +100,7 @@ public class EventoSteps {
         evento.setCapacidade(200);
         evento.setDataHoraInicio(LocalDateTime.now().minusDays(5));
         evento.setDataHoraTermino(LocalDateTime.now().minusDays(5).plusHours(2));
+        evento.setIdadeMinima(18);
 
         adiciona_lote_valido();
 

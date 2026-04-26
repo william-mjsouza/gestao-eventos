@@ -14,15 +14,15 @@ Funcionalidade: Inscrição em evento
     Quando ele tenta iniciar uma nova inscrição para o mesmo evento
     Então o sistema deve alertar que ele já possui participação
 
-  Cenário: Cancelar inscrição com antecedência
+  Cenário: Cancelar inscrição com mais de 7 dias gera estorno integral
     Dado que um participante possui uma inscrição confirmada
-    E o evento está marcado para daqui a 5 dias
+    E o evento está marcado para daqui a 10 dias
     Quando ele solicita o cancelamento da inscrição
     Então a inscrição deve ser cancelada com sucesso
     E o saldo do participante deve ser estornado
     E a vaga deve voltar para o lote
 
-  Cenário: Cancelar inscrição fora do prazo
+  Cenário: Cancelar inscrição com menos de 48 horas não é permitido
     Dado que um participante possui uma inscrição confirmada
     E o evento está marcado para daqui a 2 horas
     Quando ele solicita o cancelamento da inscrição
