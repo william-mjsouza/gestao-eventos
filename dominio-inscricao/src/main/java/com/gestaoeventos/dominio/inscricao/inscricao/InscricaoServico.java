@@ -30,12 +30,15 @@ public class InscricaoServico {
 
     @Transactional
     public Inscricao iniciarInscricao(String cpf, Long eventoId, Long loteId) {
-        if (inscricaoRepositorio.existsByParticipanteCpfAndEventoId(cpf, eventoId)) {
-            throw new InscricaoException("Usuário já possui participação neste evento.");
-        }
-
         Evento evento = eventoRepositorio.findById(eventoId)
                 .orElseThrow(() -> new InscricaoException("Evento não encontrado."));
+
+        long ingressosDoUsuario = inscricaoRepositorio.countByParticipanteCpfAndEventoIdAndStatusIn(
+                cpf, eventoId, java.util.Arrays.asList(StatusInscricao.PENDENTE, StatusInscricao.CONFIRMADA));
+
+        if (ingressosDoUsuario >= evento.getLimiteIngressosPorCpf()) {
+            throw new InscricaoException("Limite de ingressos por usuário atingido para este evento.");
+        }
 
         if (evento.getStatus() == StatusEvento.CANCELADO) {
             throw new InscricaoException("Não é possível se inscrever em um evento cancelado.");

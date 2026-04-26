@@ -49,6 +49,10 @@ public class Evento {
     @Min(value = 1, message = "A capacidade deve ser maior que zero")
     private int capacidade;
 
+    @Column(nullable = false)
+    @Min(value = 1, message = "O limite de ingressos por CPF deve ser maior que zero")
+    private int limiteIngressosPorCpf = 1;
+
     @ManyToOne
     @JoinColumn(name = "organizador_cpf", nullable = false)
     @NotNull(message = "O organizador é obrigatório")
