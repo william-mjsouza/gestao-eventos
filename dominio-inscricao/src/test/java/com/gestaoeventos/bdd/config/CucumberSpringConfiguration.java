@@ -3,6 +3,7 @@ package com.gestaoeventos.bdd.config;
 import com.gestaoeventos.dominio.evento.lote.LoteServico;
 import com.gestaoeventos.dominio.inscricao.carrinho.CarrinhoRepositorio;
 import com.gestaoeventos.dominio.evento.evento.EventoRepositorio;
+import com.gestaoeventos.dominio.evento.evento.EventoServico;
 import com.gestaoeventos.dominio.inscricao.TestApplication;
 import com.gestaoeventos.dominio.inscricao.avaliacao.AvaliacaoRepositorio;
 import com.gestaoeventos.dominio.inscricao.cupom.CupomRepositorio;

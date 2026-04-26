@@ -22,6 +22,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 public class StatusEventoSteps {
@@ -82,6 +83,13 @@ public class StatusEventoSteps {
         when(eventoRepositorio.existsByNome(evento.getNome())).thenReturn(false);
         when(eventoRepositorio.findById(evento.getId())).thenReturn(Optional.of(evento));
         when(eventoRepositorio.save(any(Evento.class))).thenAnswer(i -> i.getArgument(0));
+        when(eventoServico.alterarStatus(eq(evento.getId()), any(StatusEvento.class)))
+                .thenAnswer(invocation -> {
+                    StatusEvento novoStatus = invocation.getArgument(1);
+                    evento.setStatus(novoStatus);
+                    eventoRepositorio.save(evento);
+                    return evento;
+                });
     }
 
     @Quando("o organizador publica o evento")
@@ -155,7 +163,7 @@ public class StatusEventoSteps {
 
     @Entao("o sistema deve impedir a ação")
     public void sistema_deve_impedir_acao() {
-        assertNotNull(excecao, "O sistema deveria ter lançado uma exceção.");
+        assertNotNull(excecao);
         assertTrue(excecao instanceof InscricaoException);
         verify(inscricaoRepositorio, never()).save(any());
     }
@@ -163,8 +171,6 @@ public class StatusEventoSteps {
     @E("informar que o evento foi cancelado")
     public void informar_evento_cancelado() {
         String mensagem = excecao.getMessage().toLowerCase();
-        assertTrue(mensagem.contains("cancelado"),
-                "A mensagem deveria informar que o evento foi cancelado. Mensagem atual: "
-                        + excecao.getMessage());
+        assertTrue(mensagem.contains("cancelado"));
     }
 }

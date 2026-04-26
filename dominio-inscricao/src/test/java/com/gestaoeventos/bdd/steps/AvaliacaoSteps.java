@@ -1,5 +1,7 @@
 package com.gestaoeventos.bdd.steps;
 
+import com.gestaoeventos.dominio.compartilhado.StatusEvento;
+import com.gestaoeventos.dominio.compartilhado.StatusInscricao;
 import com.gestaoeventos.dominio.evento.evento.Evento;
 import com.gestaoeventos.dominio.evento.evento.EventoRepositorio;
 import com.gestaoeventos.dominio.inscricao.avaliacao.Avaliacao;
@@ -19,9 +21,7 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 public class AvaliacaoSteps {
@@ -61,8 +61,12 @@ public class AvaliacaoSteps {
 
         when(pessoaRepositorio.findById(participante.getCpf())).thenReturn(Optional.of(participante));
 
-        when(inscricaoRepositorio.existsByParticipanteCpfAndEventoId(eq(participante.getCpf()), anyLong()))
+        when(inscricaoRepositorio.existsByParticipanteCpfAndEventoIdAndStatus(
+                eq(participante.getCpf()), anyLong(), eq(StatusInscricao.CONFIRMADA)))
                 .thenReturn(true);
+
+        when(avaliacaoRepositorio.existsByPessoaCpfAndEventoId(anyString(), anyLong()))
+                .thenReturn(false);
     }
 
     @E("o status do evento consta como {string}")
@@ -73,6 +77,7 @@ public class AvaliacaoSteps {
         evento.setDescricao("Evento encerrado");
         evento.setLocal("Centro de Convenções");
         evento.setCapacidade(500);
+        evento.setStatus(StatusEvento.ENCERRADO);
         evento.setDataHoraInicio(LocalDateTime.now().minusDays(1));
 
         when(eventoRepositorio.findById(evento.getId())).thenReturn(Optional.of(evento));
@@ -102,7 +107,7 @@ public class AvaliacaoSteps {
 
     @E("vinculada ao evento")
     public void vinculada_ao_evento() {
-        assertNotNull(avaliacaoSalva, "A avaliação salva não deveria ser nula.");
+        assertNotNull(avaliacaoSalva);
         assertEquals(evento.getId(), avaliacaoSalva.getEvento().getId());
         assertEquals(participante.getCpf(), avaliacaoSalva.getPessoa().getCpf());
     }
@@ -122,8 +127,12 @@ public class AvaliacaoSteps {
 
         when(pessoaRepositorio.findById(participante.getCpf())).thenReturn(Optional.of(participante));
 
-        when(inscricaoRepositorio.existsByParticipanteCpfAndEventoId(eq(participante.getCpf()), anyLong()))
+        when(inscricaoRepositorio.existsByParticipanteCpfAndEventoIdAndStatus(
+                eq(participante.getCpf()), anyLong(), eq(StatusInscricao.CONFIRMADA)))
                 .thenReturn(true);
+
+        when(avaliacaoRepositorio.existsByPessoaCpfAndEventoId(anyString(), anyLong()))
+                .thenReturn(false);
 
         evento = new Evento();
         evento.setId(2L);
@@ -131,6 +140,7 @@ public class AvaliacaoSteps {
         evento.setDescricao("Evento futuro");
         evento.setLocal("Auditório B");
         evento.setCapacidade(100);
+        evento.setStatus(StatusEvento.ATIVO);
         evento.setDataHoraInicio(LocalDateTime.now().plusDays(1));
 
         when(eventoRepositorio.findById(evento.getId())).thenReturn(Optional.of(evento));
@@ -147,7 +157,7 @@ public class AvaliacaoSteps {
 
     @Entao("o botão ou área de avaliação não deve estar disponível para uso")
     public void botao_avaliacao_nao_disponivel() {
-        assertNotNull(excecao, "O sistema deveria ter bloqueado a avaliação antecipada.");
+        assertNotNull(excecao);
         assertTrue(excecao instanceof AvaliacaoException);
         verify(avaliacaoRepositorio, never()).save(any(Avaliacao.class));
     }
@@ -167,7 +177,8 @@ public class AvaliacaoSteps {
 
         when(pessoaRepositorio.findById(participante.getCpf())).thenReturn(Optional.of(participante));
 
-        when(inscricaoRepositorio.existsByParticipanteCpfAndEventoId(eq(participante.getCpf()), anyLong()))
+        when(inscricaoRepositorio.existsByParticipanteCpfAndEventoIdAndStatus(
+                eq(participante.getCpf()), anyLong(), eq(StatusInscricao.CONFIRMADA)))
                 .thenReturn(false);
     }
 
@@ -179,6 +190,7 @@ public class AvaliacaoSteps {
         evento.setDescricao("Evento que já aconteceu");
         evento.setLocal("Auditório A");
         evento.setCapacidade(200);
+        evento.setStatus(StatusEvento.ENCERRADO);
         evento.setDataHoraInicio(LocalDateTime.now().minusDays(2));
 
         when(eventoRepositorio.findById(evento.getId())).thenReturn(Optional.of(evento));
@@ -195,7 +207,7 @@ public class AvaliacaoSteps {
 
     @Entao("o sistema deve rejeitar a avaliação")
     public void sistema_deve_rejeitar_avaliacao() {
-        assertNotNull(excecao, "O sistema deveria ter rejeitado a avaliação.");
+        assertNotNull(excecao);
         assertTrue(excecao instanceof AvaliacaoException);
         verify(avaliacaoRepositorio, never()).save(any(Avaliacao.class));
     }
@@ -203,8 +215,136 @@ public class AvaliacaoSteps {
     @E("exibir uma mensagem informando que apenas inscritos podem avaliar")
     public void exibir_mensagem_apenas_inscritos() {
         String mensagem = excecao.getMessage().toLowerCase();
-        assertTrue(mensagem.contains("inscrição") || mensagem.contains("inscrito") || mensagem.contains("confirmada"),
-                "A mensagem deveria informar que apenas inscritos podem avaliar. Mensagem atual: "
-                        + excecao.getMessage());
+        assertTrue(mensagem.contains("inscrição") || mensagem.contains("inscrito") || mensagem.contains("confirmada"));
+    }
+
+    @Dado("que o evento está encerrado e o usuário possui inscrição confirmada")
+    public void evento_encerrado_usuario_com_inscricao_confirmada() {
+        excecao = null;
+        avaliacaoSalva = null;
+
+        participante = new Pessoa();
+        participante.setCpf("44455566677");
+        participante.setNome("Fernanda Oliveira");
+        participante.setEmail("fernanda@email.com");
+        participante.setSenha("senhaF");
+        participante.setOrganizador(false);
+
+        when(pessoaRepositorio.findById(participante.getCpf())).thenReturn(Optional.of(participante));
+
+        when(inscricaoRepositorio.existsByParticipanteCpfAndEventoIdAndStatus(
+                eq(participante.getCpf()), anyLong(), eq(StatusInscricao.CONFIRMADA)))
+                .thenReturn(true);
+
+        when(avaliacaoRepositorio.existsByPessoaCpfAndEventoId(anyString(), anyLong()))
+                .thenReturn(false);
+
+        evento = new Evento();
+        evento.setId(10L);
+        evento.setNome("Evento com Cashback");
+        evento.setDescricao("Evento encerrado");
+        evento.setLocal("Auditório C");
+        evento.setCapacidade(300);
+        evento.setStatus(StatusEvento.ENCERRADO);
+        evento.setDataHoraInicio(LocalDateTime.now().minusDays(1));
+
+        when(eventoRepositorio.findById(evento.getId())).thenReturn(Optional.of(evento));
+
+        when(avaliacaoRepositorio.save(any(Avaliacao.class))).thenAnswer(invocation -> {
+            Avaliacao av = invocation.getArgument(0);
+            av.setId(100L);
+            return av;
+        });
+    }
+
+    @E("o saldo atual da carteira virtual do usuário é de R$ {double}")
+    public void saldo_atual_carteira(Double saldo) {
+        participante.setSaldo(saldo);
+    }
+
+    @Quando("ele envia uma nota {int} e um comentário sobre o evento")
+    public void envia_nota_e_comentario(int nota) {
+        try {
+            avaliacaoSalva = avaliacaoServico.salvar(nota, "Excelente evento!", evento.getId(), participante.getCpf());
+        } catch (Exception e) {
+            excecao = e;
+        }
+    }
+
+    @Entao("o sistema deve salvar a avaliação")
+    public void sistema_deve_salvar_avaliacao() {
+        assertNull(excecao, "Não deveria ter ocorrido erro: "
+                + (excecao != null ? excecao.getMessage() : ""));
+        verify(avaliacaoRepositorio, times(1)).save(any(Avaliacao.class));
+    }
+
+    @E("creditar automaticamente R$ {double} na carteira do usuário atualizando para R$ {double}")
+    public void creditar_cashback_na_carteira(Double cashback, Double novoSaldo) {
+        assertEquals(novoSaldo, participante.getSaldo());
+        verify(pessoaRepositorio, times(1)).save(participante);
+    }
+
+    @E("gerar um aviso de cashback ao usuário")
+    public void gerar_aviso_cashback() {
+        assertNotNull(avaliacaoSalva);
+        assertTrue(participante.getSaldo() >= AvaliacaoServico.VALOR_CASHBACK);
+    }
+
+
+    @Dado("que o usuário já enviou uma avaliação para o evento e recebeu a recompensa")
+    public void usuario_ja_avaliou_e_recebeu_recompensa() {
+        excecao = null;
+        avaliacaoSalva = null;
+
+        participante = new Pessoa();
+        participante.setCpf("77788899900");
+        participante.setNome("Ricardo Melo");
+        participante.setEmail("ricardo@email.com");
+        participante.setSenha("senhaR");
+        participante.setSaldo(15.0);
+        participante.setOrganizador(false);
+
+        when(pessoaRepositorio.findById(participante.getCpf())).thenReturn(Optional.of(participante));
+
+        when(inscricaoRepositorio.existsByParticipanteCpfAndEventoIdAndStatus(
+                eq(participante.getCpf()), anyLong(), eq(StatusInscricao.CONFIRMADA)))
+                .thenReturn(true);
+
+        when(avaliacaoRepositorio.existsByPessoaCpfAndEventoId(
+                eq(participante.getCpf()), anyLong()))
+                .thenReturn(true);
+
+        evento = new Evento();
+        evento.setId(20L);
+        evento.setNome("Evento Já Avaliado");
+        evento.setDescricao("Usuário tenta avaliar de novo");
+        evento.setLocal("Auditório D");
+        evento.setCapacidade(200);
+        evento.setStatus(StatusEvento.ENCERRADO);
+        evento.setDataHoraInicio(LocalDateTime.now().minusDays(2));
+
+        when(eventoRepositorio.findById(evento.getId())).thenReturn(Optional.of(evento));
+    }
+
+    @Quando("ele tenta enviar uma nova avaliação para o mesmo evento alterando a nota")
+    public void tenta_enviar_nova_avaliacao() {
+        try {
+            avaliacaoServico.salvar(1, "Mudei de ideia!", evento.getId(), participante.getCpf());
+        } catch (Exception e) {
+            excecao = e;
+        }
+    }
+
+    @Entao("o sistema deve rejeitar a requisição")
+    public void sistema_deve_rejeitar_requisicao() {
+        assertNotNull(excecao);
+        assertTrue(excecao instanceof AvaliacaoException);
+        verify(avaliacaoRepositorio, never()).save(any(Avaliacao.class));
+        assertEquals(15.0, participante.getSaldo());
+    }
+
+    @E("informar que o usuário já avaliou este evento anteriormente")
+    public void informar_avaliacao_ja_existente() {
+        assertEquals("Você já avaliou este evento anteriormente.", excecao.getMessage());
     }
 }
