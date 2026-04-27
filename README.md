@@ -172,3 +172,4 @@ mvn test -pl dominio-inscricao -Dtest=CucumberRunnerTest
 
 - **Mapa das Histórias de Usuários (Miro):** https://miro.com/app/board/uXjVG1wbDB4=/?share_link_id=839589694420
 - **Funcionalidades:** https://docs.google.com/document/d/1PZuCj7tF4efCE54N9hjjhOQTANeV_AwX9MOFAhRuOtA/edit?tab=t.0#heading=h.ib893ooses5u
+- Slides entrega 1: https://canva.link/hy5f6r6vbo94bnl
